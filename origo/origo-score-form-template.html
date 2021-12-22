@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Score</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://static.paymentiq.io/assets/fonts/custom-font-santander.css?env=origo_template_score">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <!-- Custom dropdown logic from https://www.w3schools.com/howto/howto_custom_select.asp -->
+    <script>
+      $(document).ready(function () {
+        
+        window.scrollTo(0, 1000);
+        
+        var x, i, j, l, ll, selElmnt, a, b, c;
+        /* Look for any elements with the class "custom-select": */
+        x = document.getElementsByClassName("custom-select");
+        l = x.length;
+        for (i = 0; i < l; i++) {
+          selElmnt = x[i].getElementsByTagName("select")[0];
+          if (!selElmnt) {
+            continue
+          }
+          ll = selElmnt.length;
+          /* For each element, create a new DIV that will act as the selected item: */
+          a = document.createElement("DIV");
+          a.setAttribute("class", "select-selected");
+          a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+          x[i].appendChild(a);
+          /* For each element, create a new DIV that will contain the option list: */
+          b = document.createElement("DIV");
+          b.setAttribute("class", "select-items select-hide");
+          for (j = 1; j < ll; j++) {
+            /* For each option in the original select element,
+            create a new DIV that will act as an option item: */
+            c = document.createElement("DIV");
+            c.innerHTML = selElmnt.options[j].innerHTML;
+            c.addEventListener("click", function(e) {
+                /* When an item is clicked, update the original select box,
+                and the selected item: */
+                var y, i, k, s, h, sl, yl;
+                s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+                sl = s.length;
+                h = this.parentNode.previousSibling;
+                for (i = 0; i < sl; i++) {
+                  if (s.options[i].innerHTML == this.innerHTML) {
+                    s.selectedIndex = i;
+                    h.innerHTML = this.innerHTML;
+                    
+                    // hacky way of getting a onchange hook
+                    if (s.id === 'professionalStatus') {
+                      registerEmploymentChange(this.innerHTML)
+                    }
+                    
+                    y = this.parentNode.getElementsByClassName("same-as-selected");
+                    yl = y.length;
+                    for (k = 0; k < yl; k++) {
+                      y[k].removeAttribute("class");
+                    }
+                    this.setAttribute("class", "same-as-selected");
+                    break;
+                  }
+                }
+                h.click();
+            });
+            b.appendChild(c);
+          }
+          x[i].appendChild(b);
+          a.addEventListener("click", function(e) {
+            /* When the select box is clicked, close any other select boxes,
+            and open/close the current select box: */
+            e.stopPropagation();
+            closeAllSelect(this);
+            this.nextSibling.classList.toggle("select-hide");
+            this.classList.toggle("select-arrow-active");
+          });
+        }
+
+        function closeAllSelect(elmnt) {
+          /* A function that will close all select boxes in the document,
+          except the current select box: */
+          var x, y, i, xl, yl, arrNo = [];
+          x = document.getElementsByClassName("select-items");
+          y = document.getElementsByClassName("select-selected");
+          xl = x.length;
+          yl = y.length;
+          for (i = 0; i < yl; i++) {
+            if (elmnt == y[i]) {
+              arrNo.push(i)
+            } else {
+              y[i].classList.remove("select-arrow-active");
+            }
+          }
+          for (i = 0; i < xl; i++) {
+            if (arrNo.indexOf(i)) {
+              x[i].classList.add("select-hide");
+            }
+          }
+        }
+
+        /* If the user clicks anywhere outside the select box,
+        then close all select boxes: */
+        document.addEventListener("click", function () {
+          closeAllSelect()
+        });
+      })
+    </script>
+
+    <style>
+            html, body {
+                margin: 0px;
+                padding: 0px;
+                height: 100%;
+                width: 100%;
+                font-family: Santander, Arial, Sans-serif;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .santander-logo {
+                display: block;
+                width: 100%;
+                max-width: 400px;
+                margin-bottom: 70px;
+            }
+
+            .origo-container {
+                margin: 0 auto;
+                padding: 14px 0px;
+            }
+            
+            /* Loading modal */
+            
+            .disabled-screen {
+              opacity: 0;
+              position: absolute;
+              top: 0px;
+              left: 0px;
+              height: 100%;
+              width: 100%;
+              background-color: #fff;
+              z-index: -1;
+            }
+            
+            .disabled-screen.visible {
+              z-index: 10;
+              opacity: 0.6;
+              transition: opacity .1s ease-in;
+            }
+            
+            .loading-screen {
+              opacity: 0;
+              width: 75%;
+              height: 40%;
+              max-height: 300px;
+              background-color: #fff;
+              border: 1px solid #909090;
+              border-radius: 6px;
+              top: 10%;
+              position: fixed;
+              left: 50%;
+              margin-left: calc(75%/-2);
+              z-index: -1;
+              padding: 20px;
+              -webkit-box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+              -moz-box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+              box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+            }
+            
+            /* 
+              ##Device = Low Resolution Tablets, Mobiles (Landscape)
+              ##Screen = B/w 481px to 767px
+            */
+            
+            @media (min-width: 481px) and (max-width: 767px) {
+              .loading-screen {
+                top: auto;
+                bottom: 150px;
+              }
+            }
+            
+            /* 
+              ##Device = Most of the Smartphones Mobiles (Portrait)
+              ##Screen = B/w 320px to 479px
+            */
+            
+            @media (min-width: 320px) and (max-width: 480px) {
+             .loading-screen {
+                top: auto;
+                bottom: 150px;
+              }
+            }
+            
+            .loading-screen.visible {
+              z-index: 20;
+              opacity: 1;
+              transition: opacity .1s ease-in;
+            }
+            
+            .loading-screen {
+              margin-top: 20px;
+            }
+            
+            .loading-screen .loader {
+              width: 20%;
+              height: 20%;
+              max-width: 50px;
+              max-height: 50px;
+              margin: 20px auto;
+            }
+            
+            .loading-screen .loader i {
+              font-size: 50px;
+            }
+            
+            .loading-screen h2 {
+              text-align: center;
+            }
+            
+            .loading-screen p {
+              text-align: center;
+              margin: 10px 0px;
+            }
+
+
+            /* Form components */
+
+            .form-group input {
+              border: 2px solid #99C4D4;
+              border-radius: 1px;
+            }
+
+            .form-group label {
+              font-weight: bold;
+              font-size: 1.2em;
+            }
+
+            .form-group.column-group {
+              display: flex;
+              flex-wrap: wrap;
+              flex-direction: row;
+              justify-content: space-between;
+            }
+
+            .form-group.column-group .column-item {
+              /*width: calc((100% / 3 - 14px));*/
+              flex-grow: 1;
+              min-width: 250px;
+            }
+            
+            .form-group.column-group .spacer {
+              width: 14px;
+              height: 2px;
+            }
+
+            .employment-dropdown {
+              width: calc((100% / 2 - 7px));
+            }
+
+            /*
+            End form components
+            */
+
+            .campaign-content {
+                margin: 20px 0px;
+            }
+
+            .campaign-content h3 {
+                font-size: 1.4em;
+                border-bottom: 1px solid #e5e5e5;
+                padding-bottom: 2px;
+            }
+
+            .campaign-content .radio-option {
+                display: flex;
+                justify-content: space-between;
+                flex-direction: row;
+                background-color: #f1f1f1;
+                border: 1px solid #e5e5e5;
+                padding: 0px;
+                margin: 14px 0;
+                transition: all .2s cubic-bezier(0.3, 0.1, 0.4, 0.1);
+            }
+
+            .campaign-content .radio-option:hover, .campaign-content .radio-option:active  {
+                background-color: #e7e7e7;
+                border: 1px solid #e1e1e1;
+            }
+
+            .campaign-content .radio-option.selected {
+                font-weight: bold;
+            }
+
+            .campaign-content .radio-option label {
+                flex-grow: 1;
+                cursor: pointer;
+                padding: 10px 0px 10px 10px;
+                position: relative;
+                top: 4px;
+            }
+
+            .campaign-content .radio-option input {
+                position: relative;
+                top: 16px;
+                right: 14px;
+            }
+
+            .submit-btn {
+                background-color: #137E84;
+                color: #fff;
+                font-weight: bold;
+                font-size: 0.9em;
+                padding-top: 17px;
+                padding-bottom: 17px;
+                position: relative;
+            }
+            
+            .submit-btn i {
+              opacity: 0;
+              position: absolute;
+              right: 20px;
+              top: 17px;
+              font-size: 20px;
+            }
+
+            .submit-btn.loading i {
+              opacity: 1;
+            }
+            
+            .submit-btn:hover, .submit-btn.active {
+                background-color: #0F5F63;
+            }
+
+            .form-error {
+              font-size: 19px;
+              color: hsl(0, 100%, 40%);
+              margin-top: 1rem;
+              display: none;
+            }
+
+            .form-error.visible {
+              display: block;
+            }
+
+            .form-error::before {
+              content: '!';
+              display: inline-block;
+              border-radius: 50%;
+              width: 1.3rem;
+              height: 1.3rem;
+              line-height: 1.2rem;
+              font-size: .8rem;
+              text-align: center;
+              margin-right: .5rem;
+              color: #fff;
+              background-color: hsl(0, 100%, 40%);
+              position: relative;
+              top: -2px;
+            }
+            
+            #submit-error {
+              display: none;
+            }
+            
+            #submit-error.visible {
+              display: block;
+            }
+
+            #employment-info-section {
+              display: none;
+              position: relative;
+              margin: 0px 0px 10px 0px;
+            }
+
+            #employment-info-section .form-group {
+              margin-bottom: 40px;
+            }
+            
+            #employment-info-section .form-group.employed-since {
+              margin-bottom: 20px;
+            }
+            
+            .opt-in-out-container {
+              width: 100px;
+              display: flex;
+              margin-top: 16px;
+            }
+
+            .opt-in-out-container p {
+              flex-grow: 1;
+              font-weight: normal;
+              font-size: 14px;
+              text-align: center;
+              border: 1px solid #ccc;
+              border-radius: 4px;
+              padding: 5px 20px;
+              cursor: pointer;
+            }
+            
+            .opt-in-out-container p:nth-child(1) {
+              border-top-right-radius: 0px;
+              border-bottom-right-radius: 0px;
+            }
+            
+            .opt-in-out-container p:nth-child(2) {
+              border-top-left-radius: 0px;
+              border-bottom-left-radius: 0px;
+            }
+
+            .opt-in-out-container p:hover {
+              background-color: #f1f1f1;
+            }
+
+            .opt-in-out-container p.active {
+              background-color: #137E84;
+              color: #fff;
+            }
+
+            .opt-in-out-container p:first {
+              border-right: 0px;
+            }
+
+            /* Default hidden - shown if politically exposed person is checked true */
+            #originFunds {
+              display: none;
+              margin-top: -20px;
+            }
+            
+            /* Default hidden - shown if otherMonthlyExpenses is checked true */
+            #customerOriginOfFunds {
+              display: none;
+              margin-top: -20px;
+            }
+
+            @media (max-width: 915px) {
+              .form-group.column-group {
+
+              }
+              
+              .spacer.full {
+                display: none;
+              }
+
+              .form-group.column-group .column-item {
+                flex-grow: 1;
+              }
+              
+              .form-group.column-group .column-item {
+                margin-bottom: 14px;
+              }
+
+            }
+            
+            @media (max-width: 605px) {
+                body {
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                  padding: 15px;
+                }
+              
+                .origo-container {
+                    padding: 14px;
+                }
+
+                .form-group.column-group .column-item {
+                  width: 100%;
+                }
+
+                .spacer {
+                  display: none;
+                }
+
+                .form-group label {
+                  font-size: 0.9em;
+                }
+
+                .campaign-content .radio-option label {
+                    font-size: 0.9em;
+                }
+            }
+        </style>
+
+        <style>
+          h2 {
+            border-bottom: 1px solid #ccc;
+            margin: 40px 0px 20px 0px;
+          }
+
+          .help-text {
+            margin-bottom: 5px;
+            display: block;
+          }
+
+          /* Custom style for checkbox & radio inputs */
+          .custom-input-container {
+            display: block;
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-size: 22px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+
+          .consent-container {
+            font-size: 14px;
+          }
+
+          /* Hide the browser's default radio button */
+          .custom-input-container input.radio {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+          }
+
+          .custom-input-container input.checkbox {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+          }
+
+
+          /* Create a custom radio button */
+          .checkmark {
+            position: absolute;
+            top: 2px;
+            left: 0;
+            height: 30px;
+            width: 30px;
+            border: 2px solid #99C4D4;
+            overflow: hidden;
+          }
+
+          /* only target checkboxes */
+          .checkbox .checkmark {
+            top: 6px;
+          }
+
+          .checkmark.radio {
+            border-radius: 50%;
+          }
+
+          /* On mouse-over, add a grey background color */
+          .custom-input-container:hover input ~ .checkmark {
+            transition: border-color, .1s ease-in;
+            border: 2px solid #137E84;
+          }
+
+          /* When the radio button is checked, add a green dot */
+          .custom-input-container input:checked ~ .checkmark {
+            background-color: #fff;
+          }
+
+          /* Create the indicator (the dot/circle - hidden when not checked) */
+          .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+          }
+
+          /* Show the indicator (dot/circle) when checked */
+          .custom-input-container input:checked ~ .checkmark:after {
+            display: block;
+          }
+
+          /* Style the indicator (dot/circle) */
+          .custom-input-container.radio .checkmark:after {
+            top: 6px;
+            left: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #137E84;
+          }
+
+          .custom-input-container label {
+            margin: 0px 0px 0px 14px;
+          }
+
+          /* Style the checkmark/indicator */
+        .custom-input-container.checkbox .checkmark:after {
+          left: 10px;
+          top: 5px;
+          width: 7px;
+          height: 14px;
+          border: solid #137E84;
+          border-width: 0 3px 3px 0;
+          -webkit-transform: rotate(45deg);
+          -ms-transform: rotate(45deg);
+          transform: rotate(45deg);
+        }
+        </style>
+
+        <style>
+          /* Custom dropdown style */
+          /* The container must be positioned relative: */
+          .custom-select {
+            min-width: 175px;
+            max-width: 100%;
+            position: relative;
+            font-family: Arial;
+            padding-left: 0px;
+            padding-right: 0px;
+            border: 1px solid #99C4D4;
+            height: calc(2.25rem + 12px) !important;
+          }
+
+          .custom-select select {
+            display: none; /*hide original SELECT element: */
+          }
+
+          .select-selected {
+            background-color:#fff;
+          }
+
+          /* Style the arrow inside the select element: */
+          .select-selected:after {
+            position: absolute;
+            content: "";
+            top: 14px;
+            right: 10px;
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+            border-color: #99C4D4 transparent transparent transparent;
+          }
+
+          /* Point the arrow upwards when the select box is open (active): */
+          .select-selected.select-arrow-active:after {
+            border-color: transparent transparent #fff transparent;
+            top: 7px;
+          }
+
+          /* style the items (options), including the selected item: */
+          .select-items div,.select-selected {
+            color: #000;
+            position: relative;
+            top: 1px;
+            padding: 4px 16px;
+            border: 1px solid transparent;
+            /* border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent; */
+            cursor: pointer;
+          }
+
+          /* Style items (options): */
+          .select-items {
+            position: absolute;
+            background-color: #fff;
+            top: calc(100% + 2px);
+            left: -1px;
+            right: 0;
+            z-index: 99;
+            width: calc(101% - 4px);
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            border-top: 0px;
+          }
+
+          /* Hide the items when the select box is closed: */
+          .select-hide {
+            display: none;
+          }
+
+          .select-items div:hover, .same-as-selected {
+            background-color: rgba(0, 0, 0, 0.1);
+          }
+
+          #custom-loan-container {
+            margin: 40px 0px;
+          }
+
+          .dynamic-add-loan-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 20px 0px;
+          }
+
+          .delete-btn {
+            cursor: pointer;
+            position: absolute;
+            top: 4px;
+            display: block;
+            height: 23px;
+            width: 23px;
+            border-radius: 50%;
+            color: #000;
+            padding: 0px 6px;
+            line-height: 15px;
+            border: 2px solid #137E84;
+          }
+
+          .delete-btn:hover {
+            transition: all, 0.2s;
+            background-color: #000;
+            border-color: #000;
+            color: #fff;
+          }
+
+          .add-new-loan-btn {
+            min-width: 170px;
+            padding: 5px 15px;
+            border: 2px solid #137E84;
+            background-color: #137E84;
+            color: #fff;
+            border-radius: 20px;
+            margin: 0px 0px 14px 13px;
+            cursor: pointer;
+          }
+
+          .add-new-loan-btn:hover {
+            transition: all, 0.2s;
+            background-color: #0d6065;
+          }
+         
+          .add-new-loan-btn:focus {
+            outline: none;
+          }
+          
+          .add-new-loan-btn:active {
+            transition: all, 0.2s;
+            background-color: #0a484c;
+            outline: none;
+          }
+
+          .loan-container {
+            display: flex;
+            flex-wrap: wrap;
+            position: relative;
+            border-left: 3px solid #137E84;
+            padding-left: 10px;
+            margin-bottom: 20px;
+          }
+
+          .loan-header {
+            position: relative;
+            width: 100%;
+            left: 30px;
+          }
+
+          .custom-loan-unit {
+            position: absolute;
+            right: 8px;
+            top: 58px;
+          }
+
+          .custom-loan-form-group {
+            position: relative;
+            flex-grow: 1;
+          }
+
+          .custom-loan-form-group-full {
+            width: 100%;
+          }
+
+          .custom-loan-form-group-spacer {
+            width: 20px;
+          }
+
+          .student-remaining-terms {
+            max-width: 12em;
+          }
+
+          .block {
+            display: block;
+          }
+
+          @media (max-width: 605px) {
+            .dynamic-add-loan-container .add-new-loan-btn {
+              min-width: 100%;
+              margin-bottom: 15px;
+            }
+
+            .custom-select {
+              min-width: 100%;
+              margin-bottom: 14px;
+            }
+          }
+          
+          @media (max-width: 550px) {
+            .custom-loan-form-group {
+              width: 100%;
+              max-width: none;
+            }
+
+            .custom-loan-form-group-spacer {
+              display: none;
+            }
+          }
+          
+        </style>
+</head>
+
+<body onLoad="initSetup()">
+  <div class='origo-container'>
+    
+    <div class='disabled-screen'></div>
+      <div class='loading-screen'>
+        <div class='loader'>
+          <i class="fa fa-circle-o-notch fa-spin"></i>
+        </div>
+      
+        <h2>Behandler søknaden din</h2>
+        <p>Dette kan ta et minutt eller to, men vi er snart ferdige</p>
+      </div>
+    
+    <form id='origo-form' action="${postUrl}" method="post">
+        <img class='santander-logo' src='https://static.paymentiq.io/santander-horizontal.svg' />
+
+        <h2>Grunnleggende informasjon</h2>
+
+        ${if dtiOrSifo}
+
+          <div class="form-group">
+            <label for="maritalStatus">Hva er din sivilstatus?</label>
+            <br />
+            <div class='dropdown-group-container custom-select'>
+              <select name="maritalStatus" id="maritalStatus" class="required-input">
+                <option value="" disabled selected>Velg sivilstatus</option>  
+                ${foreach maritalStatus status}
+                  <option value="${status.key}">${status.value}</option>
+                ${end}
+              </select>
+            </div>
+            <div class='form-error' style='margin-top: 10px;'>Sivilstatus er påkrevd</div>
+          </div>
+
+        ${end}
+
+        <div class="form-group">
+          <label for="numberOfChildren">Antall barn?</label>
+          <input
+            id="numberOfChildren"
+            class='form-control form-control-lg required-input'
+            name="numberOfChildren"
+            pattern="[0-9]*"
+            type="text"
+            value="0"
+            placeholder="Antall barn">
+            
+          <div class='form-error'>Obligatoriske felt</div>
+        </div>
+
+        <div class="form-group">
+          <label for="residentialStatus">Hva er ditt boforhold?</label>
+          <br />
+          <div class='dropdown-group-container custom-select'>
+            <select name="residentialStatus" id="residentialStatus" class="required-input">
+              <option value="" disabled selected>Velg boforhold</option>  
+              ${foreach residentialStatus status}
+              <option value="${status.key}">${status.value}</option>
+              ${end}
+            </select>
+          </div>
+          <div class='form-error' style='margin-top: 10px;'>Boforhold er påkrevd</div>
+        </div>
+
+        <!-- OPT IN OR OUT Component -->
+        <div class="form-group">
+          <label for="norwegianCitizen">Er du norsk statsborger?
+            <div id="norwegianCitizen" class='opt-in-out-container'>
+              <p id='on'>Ja</p>
+              <p id='off'>Nei</p>
+            </div>
+            <div class='form-error'>Du må velge Ja eller Nei</div>
+            <input class='form-check-required' type="hidden" id="norwegianCitizen" name="norwegianCitizen" />
+          </label>
+        </div>
+
+        ${if dtiOrSifo}
+          <div class='form-group'>
+              <label for="professionalStatus">Hva er din nåværende jobbstatus?</label>
+              <br />
+              <div class='dropdown-group-container custom-select'>
+                <select name="professionalStatus" id="professionalStatus" class="required-input">
+                  <option value="" disabled selected>Velg jobbstatus</option>  
+                  ${foreach professionalStatus status}
+                  <option value="${status.key}">${status.value}</option>
+                  ${end}
+                </select>
+            </div>
+            <div class='form-error' style='margin-top: 10px;'>Jobbstatus er påkrevd</div>
+          </div>
+
+          <div id='employment-info-section'>
+            <div class='form-group'>
+              <label for="employmentPercent">Hva er din stillingsprosent?</label>
+              <input
+                id="employmentPercent"
+                style='width: calc(100% - 40px); float: left; position: relative; z-index: 15;'
+                class='form-control form-control-lg required-input'
+                name="employmentPercent"
+                type="number"
+                pattern="[0-9]*"
+                min="1"
+                max="100"
+                placeholder="0-100">
+                
+              <h3 style='position: relative; top: 8px; left: 10px;'>%</h3>
+              
+              <br />
+              <div class='form-error' style='margin-top: 0.5rem;'>Obligatoriske felt</div>
+            </div>
+
+            <div class="form-group employed-since">
+                <label for="employedSinceYear">Når ble du ansatt?</label>
+                <br />
+                <div style='display: flex; justify-content: space-between; flex-wrap: wrap;'>
+                  <div class='dropdown-group-container custom-select employment-dropdown'>
+                    <select class='dropdown required-input' name="employedSinceMonth" id="employedSinceMonth">
+                        <option disabled="disabled" selected="true" value="1">Måned</option>
+                        <option value="1">Januar</option>
+                        <option value="2">Februar</option>
+                        <option value="3">Mars</option>
+                        <option value="4">April</option>
+                        <option value="5">Mai</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                  </div>
+    
+                  <div class='custom-select employment-dropdown'>
+                    <select class='dropdown required-input' name="employedSinceYear" id="employedSinceYear">
+                      <option value="disabled selected">År</option>
+                        ${foreach years year}
+                        <option value="${year}">${year}</option>
+                        ${end}
+                    </select>
+                  </div>
+              </div>
+              <div class='form-error'>Obligatoriske felt</div><!--Single error for both year and month-->
+            </div>
+
+            <div class="form-group">
+              <label for="employer">Hvem er din arbeidsgiver?</label>
+              <input
+                id="employer"
+                class='form-control form-control-lg required-input'
+                name="employer"
+                type="text"
+                placeholder="Arbeidsgiver">
+                
+                <div class='form-error'>Obligatoriske felt</div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="netIncome">Hva er din månedslønn etter skatt?</label>
+            <input
+              id="netIncome"
+              class='form-control form-control-lg format-amount required-input'
+              name="netIncome"
+              pattern="[0-9]*"
+              type="text"
+              placeholder="Månedslønn">
+              
+            <div class='form-error'>Obligatoriske felt</div>
+          </div>
+        ${end}
+
+        ${if sifo}
+          <div class="form-group">
+            <label for="rentIncome">Hva er dine månedlige leieinntekter?</label>
+            <input
+              id="rentIncome"
+              class='form-control form-control-lg format-amount required-input'
+              name="rentIncome"
+              pattern="[0-9]*"
+              type="text"
+              placeholder="Månedlige leieinntekter">
+              
+            <div class='form-error'>Obligatoriske felt</div>
+          </div>
+        ${end}
+
+        <h2>Husholdningens gjeld</h2>
+
+        ${if sifo}
+          <!--
+            Bolig/hyttelån section
+          -->
+          <h4>Husholdningens bolig/hyttelån?</h4>
+          <div id='secured-loan-item' class="loan-container">
+          
+            <div class="form-group custom-loan-form-group custom-loan-form-group-full">
+              <label for="mortgageLoans0.loanAmount">Gjeld</label>
+              <input
+                id="mortgageLoans0.loanAmount"
+                class='form-control form-control-lg format-amount required-input'
+                name="inputMortgageLoans[0].loanAmount"
+                pattern="[0-9]*"
+                value="0"
+                type="text"
+                placeholder="Gjenstående bolig/hyttelån">
+                <span class='custom-loan-unit'>Kr</span>
+              <div class='form-error'>Obligatoriske felt</div>
+          </div>
+          <div class="form-group custom-loan-form-group">
+              <label for="mortgageLoans0.remainingTerms">Løpetid</label>
+              <input
+                id="mortgageLoans0.remainingTerms"
+                class='form-control form-control-lg required-input'
+                name="inputMortgageLoans[0].remainingTerms"
+                pattern="[0-9]*"
+                value="0"
+                type="number"
+                placeholder="Gjenstående løpetid">
+                <span class='custom-loan-unit'>År</span>
+              <div class='form-error'>Obligatoriske felt</div>
+          </div>
+          <div class='custom-loan-form-group-spacer'></div>
+          <div class="form-group custom-loan-form-group">
+              <label for="mortgageLoans0.interest">Rente</label>
+              <input
+                id="mortgageLoans0.interest"
+                class='form-control form-control-lg required-input'
+                name="inputMortgageLoans[0].interest"
+                value="0"
+                type="number"
+                placeholder="Rente">
+                <span class='custom-loan-unit'>%</span>
+              <div class='form-error'>Obligatoriske felt</div>
+          </div>
+        </div>
+        
+        <div id='custom-mortgage-loan-container'></div>
+
+        <button type='button' onClick="addNewLoan('mortgage')" class='add-new-loan-btn'>Legg till bolig/hyttelån +</button>
+
+        <hr>
+
+        <!--
+          END Bolig/hyttelån
+        -->
+          
+          <!--
+            Secured loan section
+          -->
+          <h4>Husholdningens bil/båt/mc lån</h4>
+          <div id='secured-loan-item' class="loan-container">
+            <div class="form-group custom-loan-form-group custom-loan-form-group-full">
+                <label for="securedLoans0.loanAmount">Gjeld</label>
+                <input
+                  id="securedLoans0.loanAmount"
+                  class='form-control form-control-lg format-amount required-input'
+                  name="inputSecuredLoans[0].loanAmount"
+                  pattern="[0-9]*"
+                  value="0"
+                  type="text"
+                  placeholder="Gjenstående bil/båt/mc lån">
+                  <span class='custom-loan-unit'>Kr</span>
+                <div class='form-error'>Obligatoriske felt</div>
+            </div>
+            <div class="form-group custom-loan-form-group">
+                <label for="securedLoans0.remainingTerms">Løpetid</label>
+                <input
+                  id="securedLoans0.remainingTerms"
+                  class='form-control form-control-lg required-input'
+                  name="inputSecuredLoans[0].remainingTerms"
+                  pattern="[0-9]*"
+                  value="0"
+                  type="number"
+                  placeholder="Gjenstående løpetid">
+                  <span class='custom-loan-unit'>År</span>
+                <div class='form-error'>Obligatoriske felt</div>
+            </div>
+            <div class='custom-loan-form-group-spacer'></div>
+            <div class="form-group custom-loan-form-group">
+                <label for="securedLoans0.interest">Rente</label>
+                <input
+                  id="securedLoans0.interest"
+                  class='form-control form-control-lg required-input'
+                  name="inputSecuredLoans[0].interest"
+                  value="0"
+                  type="number"
+                  placeholder="Rente">
+                  <span class='custom-loan-unit'>%</span>
+                <div class='form-error'>Obligatoriske felt</div>
+            </div>
+          </div>
+
+          <div id='custom-secured-loan-container'></div>
+          
+          <button type='button' onClick="addNewLoan('secured')" class='add-new-loan-btn'>Legg till bil/båt/mc lån +</button>
+
+          <hr>
+
+          <!-- END Secured loan section-->
+          
+          <!--
+            Student Loan section
+          -->
+          <h4>Husholdningens totale studielån?</h4>
+          <div id='student-loan-item' class="loan-container">
+            <div class="form-group custom-loan-form-group">
+                <label for="studentLoans0.loanAmount">Gjeld</label>
+                <input
+                  id="studentLoans0.loanAmount"
+                  class='form-control form-control-lg format-amount required-input'
+                  name="inputStudentLoans[0].loanAmount"
+                  pattern="[0-9]*"
+                  value="0"
+                  type="text"
+                  placeholder="Gjenstående studielån">
+                  <span class='custom-loan-unit'>Kr</span>
+                <div class='form-error'>Obligatoriske felt</div>
+            </div>
+            <div class='custom-loan-form-group-spacer'></div>
+            <div class="form-group custom-loan-form-group student-remaining-terms">
+              <label for="studentLoans0.remainingTerms">Løpetid</label>
+              <input
+                id="studentLoans0.remainingTerms"
+                class='form-control form-control-lg required-input'
+                name="inputStudentLoans[0].remainingTerms"
+                pattern="[0-9]*"
+                value="0"
+                type="number"
+                placeholder="Løpetid">
+
+                <span class='custom-loan-unit'>År</span>
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+          </div>
+
+          <div id='custom-student-loan-container'></div>
+          
+          <button type='button' onClick="addNewLoan('student')" class='add-new-loan-btn'>Legg till studielån +</button>
+          <hr>
+          <!--
+            END Student load section
+          -->
+
+          <div class="form-group">
+              <label style="display: block;" for="otherLoans">Andre faste utgifter - kun din andel?</label>
+              <span class='help-text'>Din andel av månedlig betaling av felleskostnader til borettslag/sameie, skattegjeld, gjeld til arbeidsgiver eller privatpersoner.</span>
+              <input
+                      id="otherLoans"
+                      class='form-control form-control-lg format-amount required-input'
+                      name="otherLoans"
+                      pattern="[0-9]*"
+                      type="text"
+                      placeholder="Felleskostnader til borettslag/sameie">
+                <div class='form-error'>Obligatoriske felt</div>
+          </div>
+
+        ${end}
+
+        <h2>Annen informasjon</h2>
+
+        
+        <!-- OPT IN OR OUT Component -->
+        
+        <div class="form-group">
+          <label for="politicalExposedPerson">Er du, eller har du vært, en politisk eksponert person? Er du nært familiemedlem eller kjent medarbeider med en slik person?
+            <div id="politicalExposedPerson" class='opt-in-out-container'>
+              <p id='off'>Nei</p>
+              <p id='on'>Ja</p>
+            </div>
+            <div class='form-error'>Politisk eksponert person er påkrevd</div>
+            <input class='form-check-required' type="hidden" id="politicalExposedPerson" name="politicalExposedPerson" />
+          </label>
+        </div>
+
+        <!-- OPT IN OR OUT Component -->
+        <div class="form-group">
+          <label for="appliedOnBehalfOfOthers">Inngår du avtalen for eller på vegne av andre?
+            <div id="appliedOnBehalfOfOthers" class='opt-in-out-container'>
+              <p id='off'>Nei</p>
+              <p id='on'>Ja</p>
+            </div>
+            <div class='form-error'>Søker på vegne av noen andre er påkrevd</div>
+            <input class='form-check-required' type="hidden" id="appliedOnBehalfOfOthers" name="appliedOnBehalfOfOthers" />
+          </label>
+        </div>
+
+        <div class="form-group" style='margin-top: 30px;'>
+          <label for="otherMonthlyExpences">Jeg bekrefter at kreditten skal tilbakebetales med ordinær lønn eller trygd?
+            <div id="otherMonthlyExpences" class='opt-in-out-container'>
+              <p id='on'>Ja</p>
+              <p id='off'>Nei</p>
+            </div>
+            <div class='form-error'>Politisk eksponert person er påkrevd</div>
+            <input class='form-check-required' type="hidden" id="otherMonthlyExpences" name="otherMonthlyExpences" />
+          </label>
+        </div>
+
+        <div id='customerOriginOfFunds' class="form-group">
+          <label for="customerOriginOfFunds">Hva er midlenes opprinnelse?</label>
+          <br />
+          <div class='dropdown-group-container custom-select'>
+            <select name="customerOriginOfFunds" id="customerOriginOfFunds" class="required-input">
+              <option value="" disabled selected>Opprinnelse</option>  
+                ${foreach originOfFunds origin}
+                <option value="${origin.key}">${origin.value}</option>
+                ${end}
+            </select>
+        </div>
+        <div class='form-error'>Midlenes opprinnelse er påkrevd</div>
+      </div>
+        
+      <div class='form-error' id='submit-error'></div>
+
+      <button onclick="validate()" type="button" class="submit-btn btn btn-block" value="Submit">
+        Fortsett
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+      </button>
+    </form>
+  </div>
+    <!-- Third party scripts -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <!-- Custom scripts -->
+    <script type="text/javascript">
+    
+      // Report own height to PIQ Cashier
+      function reportWindowHeight() {
+        window.parent.postMessage({
+          eventType: 'SET_PROVIDER_IFRAME_HEIGHT',
+          payload: {
+            height: $('.origo-container')[0].offsetHeight + 100,
+            sender: 'origoTemplate'
+          }
+        }, '*')  
+      }
+    
+      function initSetup () {
+        if ($) {
+         registerOptInOutClick() 
+         registerAmountFormat()
+         reportWindowHeight()
+        } else {
+          setTimeout(() => {
+            initSetup()
+          }, 100)
+        }
+      }
+
+      function registerAmountFormat () {
+        $('.format-amount').keyup(function (e) {
+          // Backspace or when value is empty (tabbing to the next field for example)
+          if (e.keyCode == 8 || this.value === '') {
+            return
+          }
+          const value = convertNumber(this.value, 0, "", " ")
+          this.value = convertNumber(this.value, 0, "", " ")
+        });
+      }
+
+      function convertNumber(number, decimals, dec_point, thousands_sep) {
+        // Strip all characters but numerical ones.
+        number = (number + '').replace(/[^0-9+\-Ee.]/g, '');
+        var n = !isFinite(+number) ? 0 : +number,
+          prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
+          sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
+          dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
+          s = '',
+          toFixedFix = function (n, prec) {
+            var k = Math.pow(10, prec);
+            return '' + Math.round(n * k) / k;
+          };
+
+        // Fix for IE parseFloat(0.55).toFixed(0) = 0;
+        s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
+        if (s[0].length > 3) {
+          // Need double slashes, PIQ/template editor removes it
+          s[0] = s[0].replace(/\\B(?=(?:\\d{3})+(?!\\d))/g, sep);
+        }
+        if ((s[1] || '').length < prec) {
+          s[1] = s[1] || '';
+          s[1] += new Array(prec - s[1].length + 1).join('0');
+        }
+        return s.join(dec);
+      }
+      
+      function registerEmploymentChange (employmentType) {
+        // reset disabled fields
+        resetEmploymentFields()
+        
+        
+        switch (employmentType) {
+          case 'Fast ansatt':
+          case 'Vikariat':
+            $('#employment-info-section').show()
+            $('#employer').parent().show()// disable specific fields for this employment type
+            $('#employmentPercent').parent().show()// disable specific fields for this employment type
+            break
+          case 'Selvstendig næringsdrivende':
+            $('#employment-info-section').show()
+            $('#employer').parent().hide()// disable specific fields for this employment type
+            $('#employmentPercent').parent().hide()// disable specific fields for this employment type
+            break;
+          default:
+            $('#employment-info-section').hide()
+            break
+        }
+        
+        setTimeout(function() {
+          reportWindowHeight()
+        }, 100)
+      }
+      
+      function resetEmploymentFields () {
+        // reset values of the fields when changing employment type + set them as not disabled
+        var fieldIds = [
+          'employer',
+          'employmentPercent',
+          'employedSinceMonth',
+          'employedSinceYear'
+        ]
+        
+        // Reset shown value in dropdown month
+        $('#employedSinceMonth').parent().find('.select-selected')[0].innerHTML = 'Velg måned'
+        // Reset shown value in dropdown year
+        $('#employedSinceYear').parent().find('.select-selected')[0].innerHTML = 'Velg år'
+        
+        $('#employer').parent().show()
+        $('#employmentPercent').parent().show()
+
+        fieldIds.forEach(function (field) {
+          // reset field value
+          $('#' + field).val('')
+        })
+      }
+      
+      function registerOptInOutClick () {
+        $('.opt-in-out-container').click(function (e) {
+          var parentElement = e.target.parentElement
+          // reset active ones
+          $(parentElement).find('.active').removeClass('active')
+          var clickedElement = e.target
+          $(clickedElement).addClass('active')
+
+          $('input#' + parentElement.id).attr('value', e.target.id)
+
+          if (parentElement.id === 'otherMonthlyExpences') {
+            if (e.target.id === 'off') {
+              // Show the field + add name attribute (in order to include in the form post payload)
+              $('#customerOriginOfFunds').show()
+              $('select#customerOriginOfFunds').attr('name', 'customerOriginOfFunds');
+            } else {
+              // hide the field + remove name attribute in order to not include in the form post payload
+              $('#customerOriginOfFunds').hide()
+              $('select#customerOriginOfFunds').removeAttr('name')
+            }
+          }
+          
+          setTimeout(function() {
+            reportWindowHeight()
+          }, 100)
+
+        })
+      }
+
+      //var customLoanCounter = 1
+      var mortgageLoanCounter = 1
+      var securedLoanCounter = 1
+      var studentLoanCounter = 1
+      function addNewLoan (type) {
+        if (type === 'mortgage') {
+          addNewMortgageLoan()
+          mortgageLoanCounter++
+        } else if (type === 'secured') {
+          addNewSecuredLoan()
+          securedLoanCounter++
+        } else if (type === 'student') {
+          addNewStudentLoan()
+          studentLoanCounter++
+        }
+
+        setTimeout(function() {
+          reportWindowHeight()
+          registerAmountFormat() // new fields added need to be registered for the format amount
+        }, 50)
+        //customLoanCounter++
+      }
+
+      function addNewMortgageLoan() {
+        // const button = $('#add-mortgage-loan').attr('disabled', true)
+        const container = $('#custom-mortgage-loan-container')
+        
+        const loanAmount = 'mortgageLoans'+ mortgageLoanCounter +'.loanAmount'
+        const loanAmountName = 'inputMortgageLoans['+ mortgageLoanCounter +'].loanAmount'
+        const remainingTerms = 'mortgageLoans'+ mortgageLoanCounter +'.remainingTerms'
+        const remainingTermsName = 'inputMortgageLoans['+ mortgageLoanCounter +'].remainingTerms'
+        const interest = 'mortgageLoans'+ mortgageLoanCounter +'.interest'
+        const interestName = 'inputMortgageLoans['+ mortgageLoanCounter +'].interest'
+
+        container.append(`
+          <div id='mortgage-loan-item' class="loan-container">
+            <span onClick="deleteLoan(this)" class='delete-btn'>x</span>
+            <h4 class='loan-header'>Boliglån</h4>
+
+            <div class="form-group custom-loan-form-group custom-loan-form-group-full">
+              <label for="`+ loanAmount + `">Gjeld</label>
+              <input
+                id="`+ loanAmount + `"
+                name="`+ loanAmountName + `"
+                class='form-control form-control-lg format-amount required-input'
+                pattern="[0-9]*"
+                value="0"
+                type="text"
+                placeholder="Lånebeløp">
+                <span class='custom-loan-unit'>Kr</span>
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+            
+            <div class="form-group custom-loan-form-group">
+              <label for="`+ remainingTerms + `">Løpetid</label>
+              <input
+                id="`+ remainingTerms + `"
+                name="`+ remainingTermsName + `"
+                class='form-control form-control-lg required-input'
+                pattern="[0-9]*"
+                value="0"
+                type="text"
+                placeholder="Løpetid">
+                <span class='custom-loan-unit'>år</span>
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+
+            <div class='custom-loan-form-group-spacer'></div>
+
+            <div class="form-group custom-loan-form-group form-group-interest">
+              <label class='block' for="`+ interest + `">Rente</label>
+              <input
+                id="`+ interest + `"
+                name="`+ interestName + `"
+                class='form-control form-control-lg required-input'
+                type="number"
+                value="0"
+                placeholder="Rente">
+                
+                <span class='custom-loan-unit'>%</span>
+
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+          </div>
+        `)
+      }
+
+      function addNewSecuredLoan() {
+        const container = $('#custom-secured-loan-container')
+
+        const loanAmount = 'securedLoans'+ securedLoanCounter +'.loanAmount'
+        const loanAmountName = 'inputSecuredLoans['+ securedLoanCounter +'].loanAmount'
+        const remainingTerms = 'securedLoans'+ securedLoanCounter +'.remainingTerms'
+        const remainingTermsName = 'inputSecuredLoans['+ securedLoanCounter +'].remainingTerms'
+        const interest = 'securedLoans'+ securedLoanCounter +'.interest'
+        const interestName = 'inputSecuredLoans['+ securedLoanCounter +'].interest'
+
+        container.append(`
+          <div id='secured-loan-item' class="loan-container">
+            <span onClick="deleteLoan(this)" class='delete-btn'>x</span>
+            <h4 class='loan-header'>Pantlån</h4>
+            
+            <div class="form-group custom-loan-form-group custom-loan-form-group-full">
+              <label for="`+ loanAmount + `">Gjeld</label>
+              <input
+                id="`+ loanAmount + `"
+                name="`+ loanAmountName + `"
+                class='form-control form-control-lg format-amount required-input'
+                pattern="[0-9]*"
+                value="0"
+                type="text"
+                placeholder="Gjeld">
+                <span class='custom-loan-unit'>Kr</span>
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+
+            <div class="form-group custom-loan-form-group">
+              <label for="`+ remainingTerms + `">Løpetid</label>
+              <input
+                id="`+ remainingTerms + `"
+                name="`+ remainingTermsName + `"
+                class='form-control form-control-lg required-input'
+                pattern="[0-9]*"
+                value="0"
+                type="text"
+                placeholder="Løpetid">
+                <span class='custom-loan-unit'>år</span>
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+
+            <div class='custom-loan-form-group-spacer'></div>
+
+            <div class="form-group custom-loan-form-group form-group-interest">
+              <label class='block' for="`+ interest + `">Rente</label>
+              <input
+                id="`+ interest + `"
+                name="`+ interestName + `"
+                class='form-control form-control-lg required-input'
+                type="number"
+                value="0"
+                placeholder="Rente">
+
+                <span class='custom-loan-unit'>%</span>
+                
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+          </div>
+        `)
+      }
+
+      function addNewStudentLoan() {
+        // const button = $('#add-student-loan').attr('disabled', true)
+        const container = $('#custom-student-loan-container')
+
+        const loanAmount = 'studentLoans'+ studentLoanCounter +'.loanAmount'
+        const loanAmountName = 'inputStudentLoans['+ studentLoanCounter +'].loanAmount'
+        const remainingTerms = 'studentLoans'+ studentLoanCounter +'.remainingTerms'
+        const remainingTermsName = 'inputStudentLoans['+ studentLoanCounter +'].remainingTerms'
+
+        container.append(`
+          <div id='student-loan-item' class="loan-container">
+            <span onClick="deleteLoan(this)" class='delete-btn'>x</span>
+            <h4 class='loan-header'>Studielån</h4>
+
+            <div class="form-group custom-loan-form-group">
+              <label for="`+ loanAmount + `">Gjeld</label>
+              <input
+                id="`+ loanAmount + `"
+                name="`+ loanAmountName + `"
+                class='form-control form-control-lg format-amount required-input'
+                pattern="[0-9]*"
+                value="0"
+                type="text"
+                placeholder="Gjeld">
+                <span class='custom-loan-unit'>Kr</span>
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+
+            <div class='custom-loan-form-group-spacer'></div>
+
+            <div class="form-group custom-loan-form-group student-remaining-terms">
+              <label for="`+ remainingTerms + `">Løpetid</label>
+              <input
+                id="`+ remainingTerms + `"
+                name="`+ remainingTermsName + `"
+                class='form-control form-control-lg required-input'
+                pattern="[0-9]*"
+                value="0"
+                type="text"
+                placeholder="Løpetid">
+
+                <span class='custom-loan-unit'>år</span>
+              <div class='form-error'>Obligatoriske felt</div>
+            </div>
+          </div>
+        `)
+      }
+
+      function deleteLoan (element) {
+        if ($(element).parent().attr('id') == 'mortgage-loan-item') {
+          mortgageLoanCounter--
+        } else if ($(element).parent().attr('id') == 'secured-loan-item') {
+          securedLoanCounter--
+        } else if ($(element).parent().attr('id') == 'student-loan-item') {
+          studentLoanCounter--
+        }
+        $(element).parent().remove()
+
+        setTimeout(function() {
+          reportWindowHeight()
+        }, 100)
+      }
+    
+      function checkMandatoryConfirms () {
+        var valid = true
+        var requiredConfirms = document.querySelectorAll('.form-check-required')
+        requiredConfirms.forEach(function (required) {
+          if ((!required.checked && required.type === 'checkbox') || (required.value === '' && required.type === 'hidden')) {
+            valid = false
+            var children = required.parentElement.children
+            for (var key in children) {
+              if (children[key].className === 'form-error') {
+                children[key].className += ' visible'
+              }
+            }
+          }
+        })
+        
+        return valid
+      }
+
+      function cleanFormValues (formString) {
+        // specific name of input fields
+        var cleanInputs = [
+          'netIncome',
+          'rentIncome',
+          'otherLoans'
+        ]
+
+        // prefix of inputs (we you have multiple defined mortgage loans for example, where each field is named mortgageLoans0.loanAmount, mortgageLoans1.loanAmount)
+        var cleanInputWildCards = ['inputMortgageLoans[', 'inputSecuredLoans[', 'inputStudentLoans[']
+        
+        let formValues = []
+        formString.split('&').forEach(function (part) {
+          const property = part.split('=')[0]
+          if (cleanInputs.indexOf(property) > -1) {
+            part = part.split('%20').join('');
+          }
+
+          // if property (field name) is mortgageLoans0.loanAmount we wanna match it against the wildcard property and clean the value
+          for (key in cleanInputWildCards) {
+            if (key.indexOf(property)) {
+              part = part.split('%20').join('');
+            }
+          }
+
+          formValues.push(part)
+        })
+        return formValues.join('&')
+      }
+
+      function submitForm() {
+        setSubmitError(null) // reset submitError
+        
+        // We have to re-convert all numbers with spaces (6000 -> 6 000) back to not include the spaces
+        // But only for specific fields
+        const cleanedSerializedForm = cleanFormValues($('#origo-form').serialize())
+
+        $.ajax({
+          type: 'POST',
+          url: $('#origo-form').attr('action'),
+          data: cleanedSerializedForm,
+          success: function (data, textStatus, xhr) {
+            /*
+              We initiate the pre-process between PIQ and Origo
+              Origo is slow to respond, and PIQ has a max timeout
+              of 60seconds which sometimes is exceeded. So we drop
+              this request right away and instead start polling PIQ
+            */
+            
+            if (xhr.status === 201) {
+              setTimeout(function(){
+                poll()  
+              }, 5000)
+            } else if (data.redirectOutput && data.redirectOutput.url) {
+              window.location.href = data.redirectOutput.url
+            } else {
+              setLoadingState(false)
+              setSubmitError('Unknown response code - please contact support')
+            }
+          },
+          error:function(xhr, textStatus, thrownError, data) {
+           setSubmitError(textStatus)
+           setLoadingState(false);
+           console.log("Error: " + thrownError);
+           console.log("Error: " + textStatus);
+          }
+        });
+      }
+      
+      var pollCounter = 0
+      function poll () {
+        pollCounter++
+          
+        if (pollCounter >= 60) {
+          setSubmitError('Kan ikke få oppdatert status - maksimalt antall forsøk nådd')
+          setLoadingState(false)
+          return 
+        }  else if (pollCounter === 5) {
+          /* Give the user some feedback */
+          $('.loading-screen').append('<p>Venter fortsatt, nesten ferdig...</p>').hide().fadeIn(50)
+        }
+        
+        $.ajax({
+            type: 'POST',
+            url: '${pollUrl}',
+            success: function (data, textStatus, xhr) {
+              if (xhr.status === 204) {
+                setTimeout(function () {
+                  poll()
+                }, 3000)
+              } else if (xhr.status === 200) {
+                /*
+                  Unless piq responds with try again, and it's a success (20X),
+                  we can assume that it's a redirectUrl to the next step (either score-form or the status template)
+                */
+                setLoadingState(false)
+                window.location.href = data // redirectUrl
+              }
+            },
+            error:function(xhr, textStatus, thrownError, data) {
+              var errorMessage = textStatus
+              if (xhr.status === 504) { // timeout
+                errorMessage = 'Uff da, noe gikk galt - Prøv igjen senere eller velg en annen betalingsmetode'
+              } else if (xhr.status === 500) { // timeout
+                errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+              } else if (xhr.status === 400) {
+                errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+              }
+              setSubmitError(errorMessage)
+              setLoadingState(false)
+              console.log("Error: " + thrownError);
+              console.log("Error: " + textStatus);
+            }
+          });
+      }
+      
+      function setSubmitError (error) {
+        if (error) {
+          $('#submit-error').addClass('visible')
+          if (error === 'error') {
+            // Just showing 'error' isn't helpful or pretty - say something more at least
+            error = 'Ups, noe mislyktes. Kontroller at alt er fylt ut og prøv igjen.'
+          }
+          $('#submit-error').text(error)  
+        } else {
+          $('#submit-error').removeClass('visible')
+          $('#submit-error').text('')  
+        }
+      }
+
+      function resetErrors () {
+        var errors = document.querySelectorAll('.form-error.visible')
+        for (var key in errors) {
+          errors[key].className = 'form-error'
+        }
+      }
+      
+      function setLoadingState (state) {
+        var submitBtn = document.querySelector('.submit-btn')
+        var disabledScreen = $('.disabled-screen')
+        var loadingModal = $('.loading-screen')
+        
+        if (state) {
+          $(submitBtn).addClass('loading');
+          $(disabledScreen).addClass('visible');
+          $(loadingModal).addClass('visible');  
+        } else {
+          $(submitBtn).removeClass('loading');
+          $(disabledScreen).removeClass('visible');
+          $(loadingModal).removeClass('visible');
+        }
+        
+        $(submitBtn).prop('disabled', state);
+      }
+      
+      function genericNotEmptyValidator (value) {
+        return value !== null && value !== ''
+      }
+      
+      function employmentSectionValidator (value) {
+        return $('#employment-info-section').is(":hidden") || (value !== null && value !== '')
+      }
+      
+      function checkInputs () {
+        var inputRules = {
+          customerOriginOfFunds: {
+            validate: function (value) {
+              return $('#customerOriginOfFunds').is(":hidden") || value !== null
+            }
+          },
+          employer: {
+            validate: employmentSectionValidator
+          },
+          employmentPercent: {
+            validate: employmentSectionValidator
+          },
+          employedSinceMonth: {
+            validate: employmentSectionValidator
+          },
+          employedSinceYear: {
+            validate: employmentSectionValidator
+          }
+        }
+        
+        var valid = true
+        var requiredInputs = $('.required-input').each(function () {
+          var value = $(this).val()
+          var id = $(this).attr('id')
+          var inputValid = inputRules[id] && inputRules[id].validate ? inputRules[id].validate(value) : genericNotEmptyValidator(value)
+
+          if (!inputValid) {
+            valid = false
+            if (id === 'employedSinceMonth' || id === 'employedSinceYear') {
+              $(this).parent().parent().parent().find('.form-error').addClass('visible')
+            } else if (this.nodeName === 'SELECT') {
+              $(this).parent().parent().find('.form-error').addClass('visible')
+            } else {
+              $(this).parent().find('.form-error').addClass('visible')
+            }
+            
+          }
+        })
+        return valid
+      }
+
+      function validate (e) {
+        setLoadingState(true);
+        resetErrors();
+
+        var mandatoryChecks = checkMandatoryConfirms();
+        var inputChecks = checkInputs()
+
+        if (mandatoryChecks && inputChecks) {
+          submitForm();
+        } else {
+          setSubmitError('En eller flere feil ble oppdaget')
+          setLoadingState(false);
+          reportWindowHeight()
+        }
+      }
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div>
+  <br/>
+    <p> min ${minDeposit} payment ${currencyFrom} </p>
+  <br/>
+   <br/>
+    <p>This is your private depositing address. Any transactions you make to this address will be show
+    in your balance after 1 confirmation.</p>
+    <p>Kindly note the minimum deposit limit stated, as a deposit
+    below this limit cannot be processed</p>
+     <br/>
+    <p>Copy the following address or follow the link to open your wallet</p>
+     <br/>
+   <a href="${currencyAddress}" target="_blank" class="link">${address}</a>
+    <br/>
+    <p>
+     <script type="text/javascript">
+        if ("${tag}" != "null") {
+        document.write("Tag: " + "${tag}")
+        }
+      </script>
+     </p>
+    <a href="${currencyAddress}" target="_blank">
+    <img src="${qr}">
+    </a>
+     <br/>
+        <p>${rateFrom} ${currencyFrom}  ≃  ${rateTo} ${currencyTo} </p>
+      <br/>
+    <p>Please be carefull to send only ${currencyFrom} to this address. Sending any other currency </p>
+      <p> may result in a deposit delay of funds being lost.</p>
+     <br/>
+  </div>
+</body>
+</html>

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Invoice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://static.paymentiq.io/assets/fonts/custom-font-santander.css?env=origo_template">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <!-- Custom dropdown logic from https://www.w3schools.com/howto/howto_custom_select.asp -->
+
+    <style>
+            html, body {
+                margin: 0px;
+                padding: 0px;
+                height: 100%;
+                width: 100%;
+                font-family: Santander, Arial, Sans-serif;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .santander-logo {
+                display: block;
+                width: 100%;
+                max-width: 400px;
+                margin-bottom: 70px;
+            }
+
+            .origo-container {
+                margin: 0 auto;
+                padding: 14px;
+            }
+            
+            /* Loading modal */
+            
+            .disabled-screen {
+              opacity: 0;
+              position: absolute;
+              top: 0px;
+              left: 0px;
+              height: 100%;
+              width: 100%;
+              background-color: #fff;
+              z-index: -1;
+            }
+            
+            .disabled-screen.visible {
+              z-index: 10;
+              opacity: 0.6;
+              transition: opacity .1s ease-in;
+            }
+            
+            .loading-screen {
+              opacity: 0;
+              width: 75%;
+              height: 40%;
+              background-color: #fff;
+              border: 1px solid #909090;
+              border-radius: 6px;
+              top: 10%;
+              position: fixed;
+              left: 50%;
+              margin-left: calc(75%/-2);
+              z-index: -1;
+              padding: 20px;
+              -webkit-box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+              -moz-box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+              box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+            }
+            
+            .loading-screen.visible {
+              z-index: 20;
+              opacity: 1;
+              transition: opacity .1s ease-in;
+            }
+            
+            .loading-screen {
+              margin-top: 20px;
+            }
+            
+            .loading-screen .loader {
+              width: 20%
+              height: 20%;
+              max-width: 50px;
+              max-height: 50px;
+              margin: 20px auto;
+            }
+            
+            .loading-screen .loader i {
+              font-size: 50px;
+            }
+            
+            .loading-screen h2 {
+              text-align: center;
+            }
+            
+            .loading-screen p {
+              text-align: center;
+              margin: 10px 0px;
+            }
+
+            /* Form components */
+
+            .form-group input {
+              border: 2px solid #99C4D4;
+              border-radius: 1px;
+            }
+
+            .form-group label {
+              font-weight: bold;
+              font-size: 1.2em;
+            }
+
+            .form-group.column-group {
+              display: flex;
+              flex-wrap: wrap;
+              flex-direction: row;
+              justify-content: space-between;
+            }
+
+            .form-group.column-group .spacer {
+              width: 14px;
+              height: 2px;
+            }
+
+            .form-group.column-group .column-item {
+              flex-grow: 1;
+              min-width: 250px;
+            }
+
+            .form-check-subtext {
+              margin-bottom: 14px;
+            }
+
+
+            /*
+            End form components
+            */
+
+            .submit-btn {
+                background-color: #137E84;
+                color: #fff;
+                font-weight: bold;
+                font-size: 0.9em;
+                padding-top: 17px;
+                padding-bottom: 17px;
+                position: relative;
+            }
+
+            .submit-btn i {
+              opacity: 0;
+              position: absolute;
+              right: 20px;
+              top: 17px;
+              font-size: 20px;
+            }
+
+            .submit-btn.loading i {
+              opacity: 1;
+            }
+
+            .submit-btn:hover, .submit-btn.active {
+                background-color: #0F5F63;
+            }
+
+            .form-error {
+              font-size: 19px;
+              color: hsl(0, 100%, 40%);
+              margin-top: 1rem;
+              display: none;
+            }
+
+            .form-error.visible {
+              display: block;
+            }
+
+            .form-error::before {
+              content: '!';
+              display: inline-block;
+              border-radius: 50%;
+              width: 1.3rem;
+              height: 1.3rem;
+              line-height: 1.2rem;
+              font-size: .8rem;
+              text-align: center;
+              margin-right: .5rem;
+              color: #fff;
+              background-color: hsl(0, 100%, 40%);
+              position: relative;
+              top: -2px;
+            }
+
+            #submit-error {
+              display: none;
+            }
+
+            #submit-error.visible {
+              display: block;
+            }
+            
+            .terms-container {
+              margin-top: 7px;
+            }
+            
+            .terms-container p {
+              color: #989898;
+              margin: 14px 0px 14px 0px;
+            }
+
+            @media (max-width: 915px) {
+              .form-group.column-group {
+
+              }
+
+              .form-group.column-group .column-item {
+                flex-grow: 1;
+                min-width: calc(50% - 14px);
+              }
+
+              .form-group.column-group .column-item:nth-child(2) {
+                margin-left: 14px;
+              }
+            }
+
+            @media (max-width: 605px) {
+                body {
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                  padding: 15px;
+                }
+
+                .origo-container {
+                    padding: 14px;
+                }
+
+                .form-group label {
+                  font-size: 0.9em;
+                }
+
+                .campaign-content .radio-option label {
+                    font-size: 0.9em;
+                }
+
+                .form-group.column-group .column-item {
+                   margin-top: 14px;
+                }
+            }
+
+            @media (max-width: 510px) {
+              .form-group.column-group .column-item, .employment-dropdown {
+                flex-grow: 1;
+                min-width: 100%;
+              }
+
+              .employment-dropdown:first-of-type {
+                 margin-bottom: 14px;
+                 width: 100%;
+              }
+
+              .form-group.column-group .column-item:nth-child(2) {
+                 margin-left: 0px;
+              }
+            }
+        </style>
+
+    <style>
+          /* Custom style for checkbox & radio inputs */
+          .custom-input-container {
+            display: block;
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-size: 22px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+
+          .consent-container {
+            font-size: 14px;
+          }
+
+          /* Hide the browser's default radio button */
+          .custom-input-container input.radio {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+          }
+
+          .custom-input-container input.checkbox {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+          }
+
+
+          /* Create a custom radio button */
+          .checkmark {
+            position: absolute;
+            top: 2px;
+            left: 0;
+            height: 30px;
+            width: 30px;
+            border: 2px solid #99C4D4;
+            overflow: hidden;
+          }
+
+          /* only target checkboxes */
+          .checkbox .checkmark {
+            top: 6px;
+          }
+
+          .checkmark.radio {
+            border-radius: 50%;
+          }
+
+          /* On mouse-over, add a grey background color */
+          .custom-input-container:hover input ~ .checkmark {
+            transition: border-color, .1s ease-in;
+            border: 2px solid #137E84;
+          }
+
+          /* When the radio button is checked, add a green dot */
+          .custom-input-container input:checked ~ .checkmark {
+            background-color: #fff;
+          }
+
+          /* Create the indicator (the dot/circle - hidden when not checked) */
+          .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+          }
+
+          /* Show the indicator (dot/circle) when checked */
+          .custom-input-container input:checked ~ .checkmark:after {
+            display: block;
+          }
+
+          /* Style the indicator (dot/circle) */
+          .custom-input-container.radio .checkmark:after {
+            top: 6px;
+            left: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #137E84;
+          }
+
+          .custom-input-container label {
+            margin: 0px 0px 0px 14px;
+          }
+
+          /* Style the checkmark/indicator */
+        .custom-input-container.checkbox .checkmark:after {
+          left: 10px;
+          top: 5px;
+          width: 7px;
+          height: 14px;
+          border: solid #137E84;
+          border-width: 0 3px 3px 0;
+          -webkit-transform: rotate(45deg);
+          -ms-transform: rotate(45deg);
+          transform: rotate(45deg);
+        }
+        </style>
+</head>
+
+<body>
+<div class='origo-container'>
+  
+    <!-- Loading modal -->
+    <div class='disabled-screen'></div>
+    <div class='loading-screen'>
+      <div class='loader'>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+      </div>
+      
+      <h2>Behandler søknaden din</h2>
+      <p>Dette kan ta et minutt eller to, men vi er snart ferdige</p>
+    </div>
+    <!-- Loading modal END-->
+  
+    <form id='origo-form' action="${postUrl}" method="post">
+        <img class='santander-logo' src='https://static.paymentiq.io/santander-horizontal.svg' />
+
+        <!--<label for="creditCheckConsent" class="consent-container custom-input-container checkbox">Ved å sende inn søknad aksepterer du at det blir foretatt en kredittvurdering og at utsendelse av gjeldpartsbrev vil foregå elektronisk.* <a href=\"https://www.santanderconsumer.no/personvern/\" target=\"_blank\">Her</a> kan du lese mer om hvordan vi håndterer dine personopplysninger.-->
+        <!--<label for="creditCheckConsent" class="consent-container custom-input-container checkbox">Det vil bli foretatt kredittvurdering ved innsendelse av søknad. Gjenpartsbrev med kopi av benyttet informasjon blir sendt elektronisk. Du vil motta link og kode til innlogging via SMS. Oppgitt telefonnummer må være registrert på deg. Ved avvik sendes gjenpartsbrev pr post.
+            <input id="creditCheckConsent" class='checkbox form-check-required' type="checkbox" name="creditCheckConsent">
+            <span class="checkmark"></span>
+            <div class='form-error'>Samtykke til kredittsjekk er påkrevd</div>
+        </label>
+        -->
+        <!--<div class='form-check-subtext'><div><i>Det vil bli foretatt kredittvurdering ved innsendelse av søknad. Gjenpartsbrev med kopi av benyttet informasjon blir sendt elektronisk. Du vil motta link og kode til innlogging via SMS. Oppgitt telefonnummer må være registrert på deg. Ved avvik sendes gjenpartsbrev pr post.</i></div></div>-->
+
+        ${if consents}
+        ${foreach consents consent}
+        <div class="form-group">
+            <input type="checkbox" id="${consent.consentCode}" class='form-check-input' name="consents[${consent.consentCode}]"/>
+            <label class="form-check-label" for="${consent.consentCode}">${consent.name}</label></br>
+            <div class='form-error'>${consent.error}</div>
+            <div class='form-check-subtext'>${consent.helpText}</div>
+        </div>
+        ${end}
+        ${end}
+        <div class="form-group">
+            <label for="nationalId">Fødselsnummer</label>
+            <input
+                    id="nationalId"
+                    class='form-control form-control-lg'
+                    name="nationalId"
+                    pattern="[0-9]*"
+                    type="text"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+                    ${if nationalId}value="${nationalId}"${else}placeholder="11 siffer"${end}>
+            <div id='nationalId-error' class='form-error'>Gyldig fødselsnummer er påkrevd</div>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Epost</label>
+            <input
+                    id="email"
+                    class='form-control form-control-lg'
+                    name="email"
+                    type="email"
+                    ${if user.email}value="${user.email}"${else}placeholder="Epost"${end}>
+            <div id='email-error' class='form-error'>Gyldig epost er påkrevd</div>
+        </div>
+
+        <div style='margin-bottom: 30px' class="form-group column-group">
+            <div class='column-item'>
+                <label for="registeredPostNumber">Folkeregistrert postnummer</label>
+                <input
+                        id="registeredPostNumber"
+                        class='form-control form-control-lg'
+                        name="registeredPostNumber"
+                        pattern="[0-9]*"
+                        type="text"
+                        oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+                        ${if user.zip}value="${user.zip}"${else}placeholder="Postnummer"${end}>
+                <div id='registeredPostNumber-error' class='form-error'>Gyldig postnummer er påkrevd</div>
+            </div>
+
+            <div class='spacer'></div>
+
+            <div class='column-item'>
+                <label for="telephoneMobile">Mobilnummer</label>
+                <input
+                        id="telephoneMobile"
+                        class='form-control form-control-lg'
+                        name="telephoneMobile"
+                        pattern="[0-9]*"
+                        type="tel"
+                        ${if user.mobile}value="${user.mobile}"${else}placeholder="Mobilnummer"${end}>
+                <div id='telephoneMobile-error' class='form-error'>Gyldig mobilnummer er påkrevd</div>
+            </div>
+        </div>
+
+        <div class='form-error' id='submit-error'></div>
+
+        <button onclick="validate()" type="button" class="submit-btn btn btn-block" value="Submit">
+            Fortsett
+            <i class="fa fa-circle-o-notch fa-spin"></i>
+        </button>
+        
+        <div class='terms-container'>
+          <div>
+            <p>Det vil bli foretatt kredittvurdering ved innsendelse av søknad. Gjenpartsbrev med kopi av benyttet informasjon blir sendt elektronisk. Du vil motta link og kode til innlogging via SMS. Oppgitt telefonnummer må være registrert på deg. Ved avvik sendes gjenpartsbrev pr post.</p>
+          </div>
+        </div>
+    </form>
+</div>
+<!-- Third party scripts -->
+<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+<!-- Custom scripts -->
+<script type="text/javascript">
+      $(document).ready(function () {
+        setTimeout(function () {
+          reportClientHeight()
+        }, 100)
+      })
+
+      function reportClientHeight () {
+        // Report own height to PIQ Cashier
+        window.parent.postMessage({
+          eventType: 'SET_PROVIDER_IFRAME_HEIGHT',
+          payload: {
+            height: $('.origo-container')[0].offsetHeight + 100,
+            sender: 'origoTemplate'
+          }
+        }, '*')
+      }
+
+      function checkMandatoryConfirms () {
+        var valid = true
+        var requiredConfirms = document.querySelectorAll('.form-check-required')
+        requiredConfirms.forEach(function (required) {
+          if (!required.checked) {
+            valid = false
+            var children = required.parentElement.children
+            for (var key in children) {
+              if (children[key].className === 'form-error') {
+                children[key].className += ' visible'
+              }
+            }
+          }
+        })
+
+        return valid
+      }
+
+      function checkMandatoryInputs () {
+        var nationalId = $('#nationalId').val()
+        var email = $('#email').val()
+        var zip = $('#registeredPostNumber').val()
+        var phone = $('#telephoneMobile').val()
+
+        var isValid = true
+
+        var nationalIdRegExp = /(0[1-9]|[1-2][0-9]|31(?!(?:0[2469]|11))|30(?!02))(0[1-9]|1[0-2])\d{7}/gm
+        var nationalIdValid = nationalId && nationalId.length === 11
+
+        function validateEmail(mail){
+          if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(mail)) {
+            return true
+          }
+          return false
+        }
+        var emailValid = email && validateEmail(email)
+
+        if (zip) {
+          zip = zip.replace(/\s/g, "X") // replace all and any blank spaces
+        }
+        var zipValid = zip && zip.length === 4 // norwegian zip is 4 digits
+        var phoneValid = phone && phone.length >= 8
+
+        var validations = [
+          { field: 'nationalId', isValid: nationalIdValid },
+          { field: 'email', isValid: emailValid },
+          { field: 'registeredPostNumber', isValid: zipValid },
+          { field: 'telephoneMobile', isValid: phoneValid }
+
+        ]
+
+        validations.forEach(function (validate) {
+          if (!validate.isValid) {
+            $('#' + validate.field + '-error').addClass('visible')
+            isValid = false
+          }
+        })
+
+
+        return isValid
+      }
+
+     function submitForm() {
+        setSubmitError(null) // reset submitError
+
+        $.ajax({
+          type: 'POST',
+          url: $('#origo-form').attr('action'),
+          data: $('#origo-form').serialize() ,
+          // dataType : 'json',
+          success: function (data, textStatus, xhr) {
+            /*
+              We initiate the pre-process between PIQ and Origo
+              Origo is slow to respond, and PIQ has a max timeout
+              of 60seconds which sometimes is exceeded. So we drop
+              this request right away and instead start polling PIQ
+            */
+            if (xhr.status === 201) {
+              setTimeout(function(){
+                poll()  
+              }, 5000)
+            } else if (data.redirectOutput && data.redirectOutput.url) {
+              window.location.href = data.redirectOutput.url
+            } else {
+              setLoadingState(false)
+              setSubmitError('Unknown response code - please contact support')
+            }
+            
+            /*
+            if(data.redirectOutput && data.redirectOutput.url) {
+              window.location = data.redirectOutput.url;
+            } else if (data.txState === 'FAILED') {
+              setLoadingState(false)
+              setSubmitError(data.statusCode)
+            }
+            */
+          },
+          error:function(xhr, textStatus, thrownError, data) {
+            var errorMessage = textStatus
+            if (xhr.status === 504) { // timeout
+              errorMessage = 'Uff da, noe gikk galt - Prøv igjen senere eller velg en annen betalingsmetode'
+            } else if (xhr.status === 500) { // timeout
+              errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig - Prøv igjen senere eller velg en annen betalingsmetode'
+            } else if (xhr.status === 400) {
+              errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen senere eller velg en annen betalingsmetode'
+            }
+            setLoadingState(false)
+            setSubmitError(errorMessage || 'There was an unknown error')
+            // window.location.href = "${redirectUrl}"
+            console.log("Error: " + thrownError);
+            console.log("Error: " + errorMessage);
+          }
+        });
+      }
+      
+        var pollCounter = 0
+        function poll () {
+          pollCounter++
+            
+          if (pollCounter >= 60) {
+            setSubmitError('Kan ikke få oppdatert status - maksimalt antall forsøk nådd')
+            setLoadingState(false)
+            return 
+          } else if (pollCounter === 3) {
+            /* Give the user some feedback */
+            $('.loading-screen').append('<p>Nesten ferdig...</p>').hide().fadeIn(50)
+          }
+          
+          $.ajax({
+            type: 'POST',
+            url: '${pollUrl}',
+            success: function (data, textStatus, xhr) {
+              console.log(xhr.status)
+              if (xhr.status === 204) {
+                setTimeout(function () {
+                  poll()
+                }, 5000)
+              } else if (xhr.status === 200) {
+                /*
+                  Unless piq responds with try again, and it's a success (20X),
+                  we can assume that it's a redirectUrl to the next step (either score-form or the status template)
+                */
+                setLoadingState(false)
+                window.location.href = data // redirectUrl
+              }
+            },
+            error:function(xhr, textStatus, thrownError, data) {
+              var errorMessage = textStatus
+              if (xhr.status === 504) { // timeout
+                errorMessage = 'Uff da, noe gikk galt - Prøv igjen senere eller velg en annen betalingsmetode'
+              } else if (xhr.status === 500) { // timeout
+                errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+              } else if (xhr.status === 400) {
+                errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+              }
+              setSubmitError(errorMessage)
+              setLoadingState(false)
+              console.log("Error: " + thrownError);
+              console.log("Error: " + textStatus);
+            }
+          });
+      }
+
+      function setSubmitError (error) {
+        if (error) {
+          $('#submit-error').addClass('visible')
+          $('#submit-error').text(error)
+        } else {
+          $('#submit-error').removeClass('visible')
+          $('#submit-error').text('')
+        }
+      }
+
+      function resetErrors () {
+        var errors = document.querySelectorAll('.form-error.visible')
+        for (var key in errors) {
+          errors[key].className = 'form-error'
+        }
+      }
+
+      function setLoadingState (state) {
+        var submitBtn = document.querySelector('.submit-btn')
+        var disabledScreen = $('.disabled-screen')
+        var loadingModal = $('.loading-screen')
+
+        if (state) {
+          $(submitBtn).addClass('loading');
+          $(disabledScreen).addClass('visible');
+          $(loadingModal).addClass('visible');  
+        } else {
+          $(submitBtn).removeClass('loading');
+          $(disabledScreen).removeClass('visible');
+          $(loadingModal).removeClass('visible');
+        }
+
+        $(submitBtn).prop('disabled', state);
+      }
+
+
+      function validate (e) {
+        console.log('validate form')
+        setLoadingState(true);
+        resetErrors()
+
+        var mandatoryChecks = checkMandatoryConfirms()
+        var inputCheck = checkMandatoryInputs()
+        reportClientHeight()
+
+        if (mandatoryChecks && inputCheck) {
+          submitForm();
+          //document.getElementById('origo-form').submit()
+        } else {
+          setSubmitError('En eller flere feil ble oppdaget')
+          setLoadingState(false);
+        }
+      }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://static.paymentiq.io/assets/fonts/custom-font-santander.css">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Santander Sweden</title>
+  <style>
+    html, body {
+      margin: 0px;
+      padding: 10px;
+      font-family: Santander, Arial, Sans-serif;
+    }
+    .main-color {
+      color: #212529;
+    }
+    .campaign-card:hover,
+    .main-bg-weak {
+      background: #e0f4f5!important;
+    }
+    .secondary-color {
+      color: #989898;
+    }
+    .main-bg {
+      background: #127e84!important;
+    }
+    .bold {
+      font-weight: bold!important;
+    }
+    .v-application .error--text {
+      color: #ed1411 !important;
+      caret-color: #ed1411 !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-main>
+          <v-row no-gutters>
+
+            <v-col class="my" cols="12" sm="12">
+              <img
+                src="https://static.paymentiq.io/santander-horizontal.svg"
+                height="35px"
+                style="max-width: 90%;"
+                alt="santander_logo"
+              />
+            </v-col>
+
+            <v-col class="my-5 py-3" cols="12" sm="12">
+              <h1 class="text-h6 text-md-h4">
+                {{ getTitle() }}
+              </h1>
+            </v-col>
+
+            <v-col :style="$vuetify.breakpoint.smAndUp ? 'padding-right:5px!important' : ''" cols="12" sm="6">
+              <v-text-field
+                style="margin-top:-0px!important"
+                v-model="socialSecurityNumber"
+                label="Personnummer (yyyymmddxxxx)"
+                placeholder="yyyymmddxxxx (12)"
+                outlined
+                color="#127e84"
+                class="bold mt-3"
+                type="number"
+                :rules="rules"
+              ></v-text-field>
+            </v-col>
+
+            <v-col :style="$vuetify.breakpoint.smAndUp ? 'padding-left:5px!important' : 'margin-top:-5px!important'" cols="12" sm="6">
+              <v-text-field
+                style="margin-top:-0px!important"
+                v-model="email"
+                label="Email"
+                placeholder="Email"
+                outlined
+                color="#127e84"
+                class="bold mt-3"
+              ></v-text-field>
+            </v-col>
+
+            <v-col class="mb-5" cols="12" sm="12">
+              <v-item-group mandatory>
+                <p
+                  style="margin-top:0px"
+                  class="caption"
+                >* Kreditavtalet löper tills vidare. Kreditgivare är Santander Consumer Bank. Lånen är baserade på kontantpriset ${ptx.amount}.
+              </p>
+
+              <v-alert
+                v-if="errorMsg"
+                border="top"
+                color="red lighten-2"
+                dark
+                class="mt-5"
+                type="error"
+              >
+                {{ errorMsg }}
+              </v-alert>
+
+                <v-row>
+                  <v-col
+                    v-for="(campaign, index) in getCampaigns()"
+                    :key="campaign.code"
+                    cols="12"
+                    md="4"
+                    @click="selectCampaign(campaign)"
+                  >
+                    <v-item v-slot="{ active, toggle }">
+                      <v-card
+                        :class="active ? 'campaign-card d-flex main-bg-weak py-2 px-2' : 'campaign-card d-flex white py-2 px-2'"
+                        @click="toggle"
+                        :style="active ? 'border:1px solid #127e84!important;box-shadow:none;' : 'border:1px solid #777777!important;box-shadow:none;'"
+                      >
+
+                      <v-row style="margin-bottom:-10px" no-gutters>
+                        <v-col class="mb-4" cols="12" md="12">
+                          <h4>{{ campaign.name }}</h4>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Lånebelopp</span>: <span class="bold">${ptx.amount}</span></p>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Återbetalningstid: <span class="bold">{{ campaign.cost.calculatedMonths }} mån.</span>
+                          </p>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Månadkostnad: <span class="bold">{{ toCurrency(campaign.cost.monthlyCost) }}</span></p>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Uppl. avgift: 
+                            <span class="bold">{{ toCurrency(campaign.startupFee) }}</span>
+                          </p>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Aviavgift: 
+                            <span class="bold">{{ toCurrency(campaign.billingFee) }}</span>
+                          </p>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Ränta: <span class="bold">{{ campaign.annualInterest }}%</span>
+                          </p>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Eff. ränta: <span class="bold">?? %</span>
+                          </p>
+                        </v-col>
+
+                        <v-col style="margin-top: -10px;" cols="12" md="6">
+                          <p class="body-2">Total kostnad: <span class="bold">{{ toCurrency(campaign.cost.totalCost) }}</span>
+                          </p>
+                        </v-col>
+                      </v-row>
+
+                        <v-scroll-y-transition>
+                          <div
+                            v-if="active"
+                            class="text-h2 flex-grow-1 text-center"
+                          ></div>
+                        </v-scroll-y-transition>
+                      </v-card>
+                    </v-item>
+                  </v-col>
+                </v-row>
+              </v-item-group>
+            </v-col>
+
+            <v-col class="mt-4" cols="12" sm="12">
+              <v-btn
+                depressed
+                large
+                block
+                x-large
+                class="main-bg white--text"
+                @click="handleSubmit"
+                :disabled="!submitDisabled"
+                :loading="loadingSubmit"
+              >
+              Fortsätt
+              </v-btn>
+            </v-col>
+
+          </v-row>
+      </v-main>
+    </v-app>
+
+    <div v-if="bankIdDialog" class="text-center">
+      <v-dialog
+        v-model="bankIdDialog"
+        width="500"
+      >
+        <v-card>
+          <v-card-title style="display:flex;justify-content:center">
+            <img
+              height="100px"
+              src="https://static.paymentiq.io/BankID_logo.png"
+            ></img>
+          </v-card-title>
+  
+          <v-card-text>
+            <div style="text-align:center" class="mb-5">
+              <v-progress-circular
+                indeterminate
+                size="25"
+                color="secondary"
+              ></v-progress-circular>
+            </div>
+            <p class="bold">Väntar på BankID signering ... </p>
+            <p>1. Starta BankID-appen i din mobil</p>
+            <p>2. Godkänn och signera</p>
+          </v-card-text>
+  
+          <v-divider></v-divider>
+  
+          <v-card-actions v-if="$vuetify.breakpoint.smAndDown">
+            <v-btn
+              block
+              color="primary"
+              text
+              @click="openBankId"
+            >
+              Öppna bankId
+            </v-btn>
+          </v-card-actions>
+
+          <v-card-actions v-if="$vuetify.breakpoint.mdAndUp" style="display:flex;justify-content: center;">
+            <img src="https://static.paymentiq.io/qr-bankid.jpeg" alt="bankid qr" height="300px">
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+
+  </div>
+
+  <script>
+    // const campaigns = "${campaigns}";
+
+    const campaigns = "[{\"accountGroup\":\"2\",\"fromDate\":null,\"fromDateUtc\":-2208985761000,\"toDate\":null,\"toDateUtc\":-2208985761000,\"baseInterestCode\":\"\",\"code\":\"4002\",\"name\":\"2 m\u00E5n. R\u00E4nte- & betalfritt utan avgifter\",\"description\":\"Buy now pay later scheme - 2 months, 0 startup fee, 0 statement fee\",\"interest\":0.0,\"annualInterest\":19.95,\"startupFee\":0.0,\"billingFee\":0.0,\"minAmount\":1000.0,\"maxAmount\":100000.0,\"effectiveInterest1\":0.0,\"effectiveInterest2\":0.0,\"effectiveIntrestFromDate\":null,\"effectiveIntrestFromDateUtc\":-2208985761000,\"masterCard\":false,\"factSheetInformation\":\"\",\"annualFee\":0.0,\"months\":2,\"interestIndicator\":false,\"minimumPayment\":0.0,\"monthlyFeeIndicator\":false,\"campaignType\":\"BNPL\",\"semId\":\"\",\"ucType\":\"\",\"minimumRepaymentPeriods\":0,\"maximumRepaymentPeriods\":0,\"billingFeeUnder\":30.0,\"cost\":{\"monthlyCost\":500.0,\"totalCost\":1000.0,\"calculatedMonths\":2},\"chainAccountId\":null,\"storeAccountId\":null},{\"accountGroup\":\"2\",\"fromDate\":null,\"fromDateUtc\":-2208985761000,\"toDate\":null,\"toDateUtc\":-2208985761000,\"baseInterestCode\":\"\",\"code\":\"4004\",\"name\":\"4 m\u00E5n. R\u00E4nte- & betalfritt utan avgifter\",\"description\":\"Buy now pay later scheme - 4 months, 0 startup fee, 0 statement fee\",\"interest\":0.0,\"annualInterest\":19.95,\"startupFee\":0.0,\"billingFee\":0.0,\"minAmount\":1000.0,\"maxAmount\":100000.0,\"effectiveInterest1\":0.0,\"effectiveInterest2\":0.0,\"effectiveIntrestFromDate\":null,\"effectiveIntrestFromDateUtc\":-2208985761000,\"masterCard\":false,\"factSheetInformation\":\"\",\"annualFee\":0.0,\"months\":4,\"interestIndicator\":false,\"minimumPayment\":0.0,\"monthlyFeeIndicator\":false,\"campaignType\":\"BNPL\",\"semId\":\"\",\"ucType\":\"\",\"minimumRepaymentPeriods\":0,\"maximumRepaymentPeriods\":0,\"billingFeeUnder\":30.0,\"cost\":{\"monthlyCost\":250.0,\"totalCost\":1000.0,\"calculatedMonths\":4},\"chainAccountId\":null,\"storeAccountId\":null},{\"accountGroup\":\"2\",\"fromDate\":null,\"fromDateUtc\":-2208985761000,\"toDate\":null,\"toDateUtc\":-2208985761000,\"baseInterestCode\":\"\",\"code\":\"3004\",\"name\":\"4 m\u00E5n. R\u00E4nte- & betalfritt, 95kr uppl.avg.\",\"description\":\"Buy now pay later scheme - 4 months, 95 startup fee, 0 statement fee\",\"interest\":0.0,\"annualInterest\":19.95,\"startupFee\":95.0,\"billingFee\":0.0,\"minAmount\":1000.0,\"maxAmount\":100000.0,\"effectiveInterest1\":4.65,\"effectiveInterest2\":0.0,\"effectiveIntrestFromDate\":null,\"effectiveIntrestFromDateUtc\":-2208985761000,\"masterCard\":false,\"factSheetInformation\":\"\",\"annualFee\":0.0,\"months\":4,\"interestIndicator\":false,\"minimumPayment\":0.0,\"monthlyFeeIndicator\":false,\"campaignType\":\"BNPL\",\"semId\":\"\",\"ucType\":\"\",\"minimumRepaymentPeriods\":0,\"maximumRepaymentPeriods\":0,\"billingFeeUnder\":30.0,\"cost\":{\"monthlyCost\":274.0,\"totalCost\":1095.0,\"calculatedMonths\":4},\"chainAccountId\":null,\"storeAccountId\":null},{\"accountGroup\":\"2\",\"fromDate\":null,\"fromDateUtc\":-2208985761000,\"toDate\":null,\"toDateUtc\":-2208985761000,\"baseInterestCode\":\"\",\"code\":\"4006\",\"name\":\"6 m\u00E5n. R\u00E4nte- & betalfritt utan avgifter\",\"description\":\"Buy now pay later scheme - 6 months, 0 startup fee, 0 statement fee\",\"interest\":0.0,\"annualInterest\":19.95,\"startupFee\":0.0,\"billingFee\":0.0,\"minAmount\":1000.0,\"maxAmount\":100000.0,\"effectiveInterest1\":0.0,\"effectiveInterest2\":0.0,\"effectiveIntrestFromDate\":null,\"effectiveIntrestFromDateUtc\":-2208985761000,\"masterCard\":false,\"factSheetInformation\":\"\",\"annualFee\":0.0,\"months\":6,\"interestIndicator\":false,\"minimumPayment\":0.0,\"monthlyFeeIndicator\":false,\"campaignType\":\"BNPL\",\"semId\":\"\",\"ucType\":\"\",\"minimumRepaymentPeriods\":0,\"maximumRepaymentPeriods\":0,\"billingFeeUnder\":30.0,\"cost\":{\"monthlyCost\":167.0,\"totalCost\":1000.0,\"calculatedMonths\":6},\"chainAccountId\":null,\"storeAccountId\":null},{\"accountGroup\":\"2\",\"fromDate\":null,\"fromDateUtc\":-2208985761000,\"toDate\":null,\"toDateUtc\":-2208985761000,\"baseInterestCode\":\"\",\"code\":\"3006\",\"name\":\"6 m\u00E5n. R\u00E4nte- & betalfritt, 195kr uppl.avg.\",\"description\":\"Buy now pay later scheme - 6 months, 195 startup fee, 0 statement fee\",\"interest\":0.0,\"annualInterest\":19.95,\"startupFee\":195.0,\"billingFee\":0.0,\"minAmount\":1000.0,\"maxAmount\":100000.0,\"effectiveInterest1\":6.86,\"effectiveInterest2\":0.0,\"effectiveIntrestFromDate\":null,\"effectiveIntrestFromDateUtc\":-2208985761000,\"masterCard\":false,\"factSheetInformation\":\"\",\"annualFee\":0.0,\"months\":6,\"interestIndicator\":false,\"minimumPayment\":0.0,\"monthlyFeeIndicator\":false,\"campaignType\":\"BNPL\",\"semId\":\"\",\"ucType\":\"\",\"minimumRepaymentPeriods\":0,\"maximumRepaymentPeriods\":0,\"billingFeeUnder\":30.0,\"cost\":{\"monthlyCost\":199.0,\"totalCost\":1195.0,\"calculatedMonths\":6},\"chainAccountId\":null,\"storeAccountId\":null}]";
+
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data: () => ({
+        loadingSubmit: false,
+        errorMsg: null,
+        bankIdDialog: false,
+        selectedCampaign: null,
+        socialSecurityNumber: null,
+        email: '',
+        rules: [
+          value => (value && value.length === 12) || 'Personnummer måste vara 12 siffror',
+        ],
+      }),
+      methods: {
+        getTitle () {
+          return this.getCampaigns()[0].campaignType === 'BNPL'
+           ? 'Köp Nu - Betala Senare - Välj finansieringsalternativ'
+           : 'Delbetalning - Välj finansieringsalternativ'
+        },
+        openBankId () {
+          window.location.replace('bankid://')
+        },
+        setErrorMsg (msg) {
+          this.errorMsg = msg;
+          this.bankIdDialog = false;
+          this.loadingSubmit = false;
+        },
+        async openBankIdTemplate () {
+          this.bankIdDialog = true;
+          const pollBankIdStatus = await fetch('${bankIdPollUrl}');
+          const res = await pollBankIdStatus.json();
+          if (res.statusCode === 'SUCCESS') {
+            window.location.replace(res.redirectOutput.url);
+          } else {
+            if (res.statusCode === 'WAITING_INPUT') {
+              setTimeout(() => {
+                this.openBankIdTemplate()
+              }, 2000);
+            } else {
+              window.location.replace('${failureUrl}');
+            }
+          }
+          console.log(res);
+        },
+        async postData (payload) {
+          const response = await fetch('${postUrl}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          })
+          const res = await response.json();
+          this.loadingSubmit = false
+          console.log(res);
+          return res;
+        },
+        async handleSubmit () {
+          if (this.underAgeValidate() < 18) {
+            this.setErrorMsg('Fel: Man måste vara över 18 för att kunna ansöka.');
+            return null;
+          }
+          this.loadingSubmit = true
+          this.errorMsg = null;
+          const payload = {
+            campaignCode: this.selectedCampaign.code,
+            socialSecurityNumber: this.socialSecurityNumber,
+            emailAddress: this.email,
+          }
+          console.log(this.selectedCampaign)
+          console.log(payload)
+          const res = await this.postData(payload)
+          if (res.statusCode = 'WAITING_INPUT') {
+            this.openBankIdTemplate()
+          } else {
+            this.setErrorMsg('Något gick fel. Kontrollera dina uppgifter och prova igen.')
+          }
+        },
+        underAgeValidate () {
+          const birthday = this.socialSecurityNumber.substr(0, 8);
+          const fixedBirthday = birthday.substr(0, 4) + '-' + birthday.substr(4, 2) + '-' + birthday.substr(6, 2);
+          var ageInMilliseconds = new Date() - new Date(fixedBirthday);
+          return Math.floor(ageInMilliseconds/1000/60/60/24/365); // convert to years
+        },
+        selectCampaign (campaign) {
+          this.selectedCampaign = campaign;
+        },
+        toCurrency (amount) {
+          return amount.toLocaleString('se-SV', {
+              style: 'currency', 
+              currency: 'SEK', 
+              minimumFractionDigits: 2 
+          });
+        },
+        getCampaigns () {
+          try {
+            return JSON.parse(campaigns);
+          } catch (err) {
+            return [{code: 1}, {code: 2}];
+          }
+        },
+      },
+      
+      computed: {
+        submitDisabled () {
+          return this.email.length > 3
+            && this.email.includes('@')
+            && this.selectedCampaign
+            && (this.socialSecurityNumber && this.socialSecurityNumber.length === 12)
+        }
+      },
+
+      created () {
+        console.log(this.$vuetify)
+        this.selectedCampaign = this.getCampaigns()[0];
+      }
+
+    })
+  </script>
+</body>
+</html>

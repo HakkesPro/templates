@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<!--
+  When PIQ gets a status + state of the requested transaction we end up here, no matter the status
+  This page will display information to the user about what he/she should do now.
+
+  In the case where the requested transaction was approved + need sign we will automatically open a new window
+  with url to the Santander/Origo sign page (doesn't support being shown in iframe).
+
+  When the sign is done/cancelled/failed, the opened window will redirect to origo-sign-redirect-template.
+  That page will trigger a postMessage with the eventType PAYMENTIQ_ORIGO_CLOSE_SIGN to be sent to it's "window.opener" a.k.a this page.
+  This page will close the opened window and then update/redirect to the final state of the process.
+-->
+
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Origo status</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://static.paymentiq.io/assets/fonts/custom-font-santander.css?env=origo_template_status">
+
+    <style>
+      html, body {
+        margin: 0px;
+        padding: 0px;
+        height: 100%;
+        width: 100%;
+        font-family: Santander, Arial, Sans-serif;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .origo-container {
+        margin: 0 auto;
+        padding: 14px;
+        min-height: 500px;
+      }
+
+      .santander-logo {
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 70px;
+      }
+
+      .radius-container {
+        padding: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .sign-later {
+        margin-top: 14px;
+      }
+
+      .sign-later p {
+        margin: 5px 0 5px 0px;
+      }
+
+      .cancel-label {
+        color: #6c6c6c;
+      }
+
+       .sign-later-link {
+        margin-top: 5px;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .sign-later-link:hover {
+        transition: all .1s ease-in;
+        color: #363636;
+      }
+
+      .external-link-icon {
+        width: 20px;
+        position: relative;
+        top: -4px;
+        left: 5px;
+      }
+
+      .submit-btn {
+        background-color: #137E84;
+        color: #fff;
+        font-weight: bold;
+        font-size: 0.9em;
+        padding-top: 17px;
+        padding-bottom: 17px;
+        position: relative;
+        position: absolute;
+        bottom: 30px;
+        left: 0px;
+      }
+
+      .submit-btn:hover, .submit-btn.active {
+          background-color: #0F5F63;
+      }
+    </style>
+</head>
+<body onload="init()">
+<div class='origo-container'>
+    <img class='santander-logo' src='https://static.paymentiq.io/santander-horizontal.svg' />
+
+    <div class='status-container'>
+        <!--
+        ${if ptx.state='SUCCESSFUL'}
+          <h1 id='order-status'>Søknaden din ble godkjent</h1>
+          <p>Bestillingen din er betalt og på vei! Du vil snart bli omdirigert til selgeren. Hvis ingenting skjer, klikker du på Fortsett.</p>
+        ${end}
+        -->
+        
+        <!--
+        ${if ptx.state='FAILED'}
+          <h1 id='order-status'>Beklager, søknaden ble ikke godkjent</h1>
+          <p>Velg en annen betalingsmetode</p>
+        ${end}
+        -->
+        
+        ${if ptx.state='CANCELLED'}
+          <h1 id='order-status'>Søknaden din ble kansellert</h1>
+        ${end}
+
+        ${if ptx.state='WAITING_INPUT'}
+          <!--ORIGO is shit and returnes one of these two - by the looks of it at random and not according to their docs -->
+          ${if ptx.pspStatusCode='APPROVED-DOCUMENT_CONTROL'}
+            <h1 id='order-status'>Søknaden din venter på signering</h1>
+            <p>Du har mottatt en e-post med instruksjoner om hvordan du fullfører søknaden.</p>
+          ${end}
+          ${if ptx.pspStatusCode='WAITING_NOTIFICATION'}
+            <h1 id='order-status'>Søknaden din venter på signering</h1>
+            <p>Du har mottatt en e-post med instruksjoner om hvordan du fullfører søknaden.</p>
+          ${end}
+
+        ${if ptx.pspStatusCode='MANUAL'}
+          <h1 id='order-status'>Søknaden din krever manuell behandling</h1>
+          <p>
+              Vi har mottatt søknaden din, men må gå gjennom detaljene manuelt. Du har mottatt en e-post med hva som skjer nå.
+              Klikk Fortsett for å fullføre bestillingen.
+          </p>
+        ${end}
+        ${end}
+    </div>
+
+    ${if ptx.state='WAITING_INPUT'}
+    ${if signUrl}
+
+      <div class='status-container'>
+          <div onclick='popSignWindow()' class='radius-container'>
+  
+              <img style='width: 150px; margin: 0 0 14px 0px;' src='https://static.paymentiq.io/bankid-no.png' />
+              <p>Fullfør søknaden din ved å signere med BankId.</p>
+  
+              <div id='manual-sign-link'>
+                  <a href=''>Åpner ikke signeringen automatisk? Klikk her for å signere</a>
+                  <img src='https://static.paymentiq.io/misc/external-link.png' class='external-link-icon' />
+              </div>
+          </div>
+      </div>
+
+      
+      <div class='sign-later'>
+          <div class="cancel-label">
+              <p value="Fullfør bestillingen">
+                  Har du problemer med signeringen?
+              </p>
+              <p>
+                  Du vil motta en e-post med muligheter for signering hvis du har problemer med dette i nettbutikken
+              </p>
+          </div>
+          <p onclick="returnToMerchant()" class='sign-later-link cancel-label'>Jeg vil signere via epost, fullføre bestillingen</p>
+      </div>
+      
+      
+    ${end}
+    ${end}
+    
+    <!--
+    ${if ptx.state='FAILED'}
+      <button onclick="returnToMerchant()" type="button" class="submit-btn btn btn-block" value="Fullfør bestillingen">
+          Fortsett
+      </button>
+    ${end}
+    -->
+    
+    ${if ptx.pspStatusCode='MANUAL'}
+      <button onclick="returnToMerchant()" type="button" class="submit-btn btn btn-block" value="Fullfør bestillingen">
+          Fortsett
+      </button>
+    ${end}
+    
+    <!--
+    ${if ptx.state='SUCCESSFUL'}
+      <button onclick="returnToMerchant()" type="button" class="submit-btn btn btn-block" value="Fullfør bestillingen">
+        Fullfør bestillingen
+      </button>
+    ${end}
+    -->
+
+</div>
+
+<script>
+    function init () {
+      ${if ptx.state='SUCCESSFUL'}
+        // auto-redirect to orde-recieved page after sign 
+        returnToMerchant()
+      ${end}
+      
+      ${if ptx.state='FAILED'}
+        // auto-redirect to orde-recieved page after sign 
+        returnToMerchant()
+      ${end}
+      
+      window.scrollTo(0, 1000);
+      reportWindowHeight()
+      
+      if ('${config.testMode}' === 'true') {
+        console.log('state: ${ptx.state}')
+        console.log('statusCode: ${ptx.statusCode}')
+        console.log('pspStatusCode: ${ptx.pspStatusCode}')
+        console.log('${signUrl}')
+      }
+
+      const REQUIRES_USER_SIGN = '${ptx.statusCode}' === 'WAITING_NOTIFICATION' && '${signUrl}'
+
+      if (REQUIRES_USER_SIGN) {
+        // awaiting user sign with bankId
+        setTimeout(function () {
+          popSignWindow()  
+        }, 1500)
+        
+      }
+    }
+
+    function popSignWindow () {
+      let params = `
+        scrollbars=yes,
+        resizable=yes,
+        status=no,
+        location=no,
+        toolbar=no,
+        menubar=no,
+        width=750,
+        height=700,
+        left=-1000,
+        top=-1000`;
+
+        const windowUrl = '${signUrl}'
+        const signWindow = open(windowUrl, 'test');
+
+        window.addEventListener("message", (event) => {
+          const eventType = event.data.eventType
+          const eventOrigin = event.origin
+          const eventTypeCheck = eventType === 'PAYMENTIQ_ORIGO_CLOSE_SIGN'
+          const originCheck = eventOrigin === 'https://test-api.paymentiq.io' || eventOrigin === 'https://api.paymentiq.io'
+
+          if (originCheck && eventTypeCheck) {
+            setCheckingStatus()
+            signWindow.close()
+            redirectToSignComplete()
+          }
+        }, false);
+    }
+    
+    function setCheckingStatus () {
+      var statusContainer = document.querySelector('.status-container')
+      var linkContainer = document.querySelector('.status-container .radius-container')
+      linkContainer.style.display = 'none'
+      
+      
+      statusContainer.innerHTML = '<h1 id="order-status">Kontrollerar transaktionsstatus</h1>'
+      statusContainer.innerHTML += '<p>Nesten ferdig, ikke lukk dette vinduet</p>'
+    }
+
+    function reportWindowHeight () {
+      window.parent.postMessage({
+        eventType: 'SET_PROVIDER_IFRAME_HEIGHT',
+        payload: {
+          height: document.querySelector('.origo-container').offsetHeight,
+          sender: 'origoTemplate'
+        }
+      }, '*')
+    }
+
+    function returnToMerchant() {
+      // Redirect to PIQ redirect url (success, failure, cancel or pending)
+      window.location.href = '${redirectUrl}'
+    }
+    
+    function redirectToSignComplete() {
+      // Redirect to /sign/ so we will pull the status from Origo and end up back in this template with the correct context
+      window.location.href = '${config.redirectUrl}'
+    }
+
+  </script>
+</body>
+</html>

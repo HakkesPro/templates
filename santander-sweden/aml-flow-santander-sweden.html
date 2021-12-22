@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://static.paymentiq.io/assets/fonts/custom-font-santander.css">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>Santander Sweden</title>
+  <style>
+    html, body {
+      margin: 0px;
+      padding: 10px;
+      font-family: Santander, Arial, Sans-serif;
+    }
+    .main-color {
+      color: #212529;
+    }
+    .campaign-card:hover,
+    .main-bg-weak {
+      background: #e0f4f5!important;
+    }
+    .secondary-color {
+      color: #989898;
+    }
+    .main-bg {
+      background: #127e84!important;
+    }
+    .bold {
+      font-weight: bold!important;
+    }
+    .v-application .error--text {
+      color: #ed1411 !important;
+      caret-color: #ed1411 !important;
+    }
+    .text-center {
+      text-align: center!important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-main v-if="!processing">
+          <v-row no-gutters>
+
+            <v-col class="my" cols="12" sm="12">
+              <img
+                src="https://static.paymentiq.io/santander-horizontal.svg"
+                height="35px"
+                style="max-width: 90%;"
+                alt="santander_logo"
+              />
+            </v-col>
+
+            <v-col class="mt-5 mb-2" cols="12" sm="12">
+              <h1 class="text-subtitle-1 text-md-h6">
+                Personliga detaljer
+              </h1>
+            </v-col>
+
+            <v-col cols="12" sm="12">
+              <v-text-field
+                label="Mobiletelefon"
+                placeholder="Mobiletelefon"
+                v-model="phoneNumber"
+                outlined
+                color="#127e84"
+                :rules="phoneRules"
+              ></v-text-field>
+            </v-col>
+
+            <v-col :class="$vuetify.breakpoint.smAndUp ? 'pr-1' : ''" cols="12" sm="6">
+              <v-select
+                label="Medborgarskap"
+                placeholder="Medborgarskap"
+                v-model="citizenship"
+                outlined
+                :items="citizenships.map(v => v.name)"
+                color="#127e84"
+              ></v-select>
+            </v-col>
+
+            <v-col :class="$vuetify.breakpoint.smAndUp ? 'pl-1' : ''" cols="12" sm="6">
+              <v-select
+                label="Dubbelt medborgarskap (valfritt)"
+                placeholder="Dubbelt medborgarskap (valfritt)"
+                v-model="doubleCitizenship"
+                outlined
+                :items="citizenships.map(v => v.name)"
+                color="#127e84"
+              ></v-select>
+            </v-col>
+
+            <v-col class="mt-5 mb-2" cols="12" sm="12">
+              <h1 class="text-subtitle-1 text-md-h6">
+                Är du, eller har du varit en person i politisk utsatt ställning (PEP) eller är du familjemedlem eller känd medarbetare till sådan person?
+              </h1>
+            </v-col>
+
+            <v-col cols="12" sm="12">
+              <v-select
+                :items="yesOrNo.map(v => v.text)"
+                v-model="politicallyExposedPerson"
+                label="JA / NEJ"
+                outlined
+                color="#127e84"
+              ></v-select>
+            </v-col>
+
+            <v-col class="mt-5 mb-2" cols="12" sm="12">
+              <h1 class="text-subtitle-1 text-md-h6">
+                Sysselsättning
+              </h1>
+            </v-col>
+
+            <v-col :class="$vuetify.breakpoint.smAndUp ? 'pr-1' : ''" cols="12" sm="6">
+              <v-select
+                :items="employmentTypes.map(v => v.label)"
+                label="Anställning"
+                v-model="employmentType"
+                color="#127e84"
+                outlined
+              ></v-select>
+            </v-col>
+
+            <v-col :class="$vuetify.breakpoint.smAndUp ? 'pl-1' : ''" cols="12" sm="6">
+              <v-text-field
+                label="Arbetsgivare"
+                placeholder="Arbetsgivare"
+                v-model="employer"
+                outlined
+                color="#127e84"
+                :disabled="!primaryIncomeRepaymentVal"
+              ></v-text-field>
+            </v-col>
+
+            <v-col v-if="!primaryIncomeRepaymentVal && employmentType !== ''" cols="12">
+              <v-select
+                :items="repaymentSources"
+                label="Från vilken inkomstkälla kommer du återbetala lånet?"
+                placeholder="Från vilken inkomstkälla kommer du återbetala lånet?"
+                v-model="repaymentSource"
+                outlined
+                color="#127e84"
+              ></v-select>
+            </v-col>
+
+            <v-col v-if="!primaryIncomeRepaymentVal && repaymentSource === 'Annat'" cols="12">
+              <v-text-field
+                label="Beskriv din inkomstkälla"
+                placeholder="Beskriv din inkomstkälla"
+                v-model="repaymentSourceOther"
+                outlined
+                color="#127e84"
+              ></v-text-field>
+            </v-col>
+
+            <v-col v-if="primaryIncomeRepaymentVal" style="margin-top:-30px" cols="12" sm="12">
+              <v-checkbox
+                v-model="primaryIncomeRepayment"
+                label="Jag kommer huvudsakligen att återbetala lånet med min lön/pension"
+                color="#127e84"
+              ></v-checkbox>
+            </v-col>
+
+            <v-col style="margin-top:-30px" cols="12" sm="12">
+              <v-checkbox
+                v-model="thirdPartyDeclaration"
+                color="#127e84"
+                label="Jag ansöker inte åt någon annan"
+              ></v-checkbox>
+            </v-col>
+
+            <v-col class="mt-4" cols="12" sm="12">
+              <v-btn
+                depressed
+                large
+                block
+                x-large
+                class="main-bg white--text"
+                @click="handleSubmit"
+                :disabled="!submitDisabled"
+              >
+              Ansök nu
+              </v-btn>
+            </v-col>
+
+          </v-row>
+      </v-main>
+
+      <v-main v-if="processing">
+        <v-col class="my-5 text-center" cols="12" sm="12">
+        <img
+            class="text-center"
+            src="https://static.paymentiq.io/santander-horizontal.svg"
+            height="35px"
+            style="max-width: 90%;"
+            alt="santander_logo"
+          />
+        </v-col>
+
+        <div v-if="processingStatus === 'WAITING_INPUT'">
+            <v-col
+              class="mt-5"
+              cols="12"
+              sm="12"
+            >
+              <p class="text-center text-h6 text-sm-h4">
+                Vänta medans vi behandlar din ansökan,
+              </p>
+              <p class="text-center text-h6 text-sm-h4">
+                detta kan dröja upp till 1-2 minuter ...
+              </p>
+            </v-col>
+
+            <v-col
+              class="mt-5 py-5 text-center"
+              cols="12"
+              sm="12"
+            >
+              <v-progress-circular
+                class="mt-5"
+                :size="100"
+                :width="7"
+                color="secondary"
+                indeterminate
+              ></v-progress-circular>
+            </v-col>
+        </div>
+
+        <div v-if="processingStatus === 'WAITING_DEPOSIT_CONFIRMATION'">
+          <v-col
+            class="mt-5"
+            cols="12"
+            sm="12"
+          >
+            <h1>GODKÄND ANSÖKAN</h1>
+            <p>
+              MER UI KOMMER
+            </p>
+            <a href="${successUrl}">
+              <button>Tillbaka till merchant</button>
+            </a>
+          </v-col>
+        </div>
+
+        <div v-if="processingStatus === 'ERR_DECLINED_OTHER_REASON'">
+          <v-col
+            class="mt-5"
+            cols="12"
+            sm="12"
+          >
+            <h1>FAILED ANSÖKAN</h1>
+            <p>
+              MER UI KOMMER
+            </p>
+            <a href="${failedUrl}">
+              <button>Tillbaka till merchant</button>
+            </a>
+          </v-col>
+        </div>
+
+        <v-row no-gutters>
+
+      </v-main>
+    </v-app>
+
+  </div>
+
+  <script>
+    const citizenshipsObject = {AF:{code:"AF",name:"Afghanistan"},AL:{code:"AL",name:"Albanien"},DZ:{code:"DZ",name:"Algeriet"},AD:{code:"AD",name:"Andorra"},AO:{code:"AO",name:"Angola"},AI:{code:"AI",name:"Anguilla"},AQ:{code:"AQ",name:"Antarktis"},AG:{code:"AG",name:"Antigua och Barbuda"},AR:{code:"AR",name:"Argentina"},AM:{code:"AM",name:"Armenien"},AW:{code:"AW",name:"Aruba"},AU:{code:"AU",name:"Australien"},AT:{code:"AT",name:"Österrike"},AZ:{code:"AZ",name:"Azerbajdzjan"},BS:{code:"BS",name:"Bahamas"},BH:{code:"BH",name:"Bahrain"},BD:{code:"BD",name:"Bangladesh,"},BB:{code:"BB",name:"Barbados"},BY:{code:"BY",name:"Vitryssland"},BE:{code:"BE",name:"Belgien"},BZ:{code:"BZ",name:"Belize"},BJ:{code:"BJ",name:"Benin"},BM:{code:"BM",name:"Bermuda"},BT:{code:"BT",name:"Bhutan"},BO:{code:"BO",name:"Bolivia"},BA:{code:"BA",name:"Bosnien och Hercegovina"},BW:{code:"BW",name:"Botswana"},BV:{code:"BV",name:"Bouvet Island"},BR:{code:"BR",name:"Brasilien"},IO:{code:"IO",name:"Brittiska territoriet i Indiska oceanen"},BN:{code:"BN",name:"Brunei"},BG:{code:"BG",name:"Bulgarien"},BF:{code:"BF",name:"Burkina Faso"},BI:{code:"BI",name:"Burundi"},KH:{code:"KH",name:"Kambodja"},CM:{code:"CM",name:"Kamerun"},CA:{code:"CA",name:"Kanada"},CV:{code:"CV",name:"Kap Verde"},KY:{code:"KY",name:"Caymanöarna"},CF:{code:"CF",name:"Centralafrikanska republiken"},TD:{code:"TD",name:"Tchad"},CL:{code:"CL",name:"Chile"},CN:{code:"CN",name:"Kina"},CX:{code:"CX",name:"Julön"},CC:{code:"CC",name:"Kokosöarna"},CO:{code:"CO",name:"Colombia"},KM:{code:"KM",name:"Komorerna"},CD:{code:"CD",name:"Kongo- Kinshasa"},CG:{code:"CG",name:"Kongo - Brazzaville"},CK:{code:"CK",name:"Cooköarna"},CR:{code:"CR",name:"Costa Rica"},HR:{code:"HR",name:"Kroatien"},CU:{code:"CU",name:"Kuba"},CY:{code:"CY",name:"Cypern"},CZ:{code:"CZ",name:"Tjeckien"},DK:{code:"DK",name:"Danmark"},DJ:{code:"DJ",name:"Djibouti"},DM:{code:"DM",name:"Dominica"},DO:{code:"DO",name:"Dominikanska republiken"},EC:{code:"EC",name:"Ecuador"},EG:{code:"EG",name:"Egypten"},SV:{code:"SV",name:"El Salvador"},GQ:{code:"GQ",name:"Ekvatorialguinea"},ER:{code:"ER",name:"Eritrea"},EE:{code:"EE",name:"Estland"},ET:{code:"ET",name:"Etiopien"},FK:{code:"FK",name:"Falklandsöarna"},FO:{code:"FO",name:"Färöarna"},FJ:{code:"FJ",name:"Fiji"},FI:{code:"FI",name:"Finland"},FR:{code:"FR",name:"Frankrike"},GF:{code:"GR",name:"Franska Guyana"},PF:{code:"PF",name:"Franska Polynesien"},TF:{code:"TF",name:"Franska sydterritorierna"},GA:{code:"GA",name:"Gabon"},GM:{code:"GM",name:"Gambia"},GE:{code:"GE",name:"Georgien"},DE:{code:"DE",name:"Tyskland"},GH:{code:"GH",name:"Ghana"},GI:{code:"GI",name:"Gibraltar"},GR:{code:"GR",name:"Grekland"},GL:{code:"GL",name:"Grönland"},GD:{code:"GD",name:"Grenada"},GP:{code:"GP",name:"Guadeloupe"},GT:{code:"GT",name:"Guatemala"},GG:{code:"GG",name:"Guernsey"},GN:{code:"GN",name:"Guinea"},GW:{code:"GW",name:"Guinea - Bissau"},GY:{code:"GY",name:"Guyana"},HT:{code:"HT",name:"Haiti"},HM:{code:"HM",name:"Heard Island and Mcdonald Islands"},VA:{code:"VA",name:"Vatikanstaten"},HN:{code:"HN",name:"Honduras"},HU:{code:"HU",name:"Ungern"},IS:{code:"IS",name:"Island"},IN:{code:"IN",name:"Indien"},CODE:{code:"CODE",name:"Indonesien"},IR:{code:"IR",name:"Iran"},IQ:{code:"IQ",name:"Irak"},IE:{code:"IE",name:"Irland"},IM:{code:"IM",name:"Isle of Man"},IL:{code:"IL",name:"Israel"},IT:{code:"IT",name:"Italien"},JM:{code:"JM",name:"Jamaica"},JP:{code:"JP",name:"Japan"},JE:{code:"JE",name:"Jersey"},JO:{code:"JO",name:"Jordanien"},KZ:{code:"KZ",name:"Kazakstan"},KE:{code:"KE",name:"Kenya"},KI:{code:"KI",name:"Kiribati"},KP:{code:"KP",name:"Nordkorea"},KR:{code:"KR",name:"Sydkorea"},KW:{code:"KW",name:"Kwait"},KG:{code:"KG",name:"Kirgizistan"},LA:{code:"LA",name:"Laos"},LV:{code:"LV",name:"Lettland"},LB:{code:"LB",name:"Libanon"},LS:{code:"LS",name:"Lesotho"},LR:{code:"LR",name:"Liberia"},LY:{code:"LY",name:"Libyen"},LI:{code:"LI",name:"Liechtenstein"},LT:{code:"LT",name:"Litauen"},LU:{code:"LU",name:"Luxemburg"},MO:{code:"MO",name:"Macao"},MG:{code:"MG",name:"Madagaskar"},MW:{code:"MW",name:"Malawi"},MY:{code:"MY",name:"Malaysia"},MV:{code:"MV",name:"Maldiverna"},ML:{code:"ML",name:"Mali"},MT:{code:"MT",name:"Malta"},MQ:{code:"MQ",name:"Martinique"},MR:{code:"MR",name:"Mauretanien"},MU:{code:"MU",name:"Mauritius"},YT:{code:"YT",name:"Mayotte"},MX:{code:"MX",name:"Mexiko"},MD:{code:"MD",name:"Moldavien"},MC:{code:"MC",name:"Monaco"},MN:{code:"MN",name:"Mongoliet"},ME:{code:"ME",name:"Montenegro"},MS:{code:"MS",name:"Montserrat"},MA:{code:"MA",name:"Marocko"},MZ:{code:"MZ",name:"Moçambique"},MM:{code:"MM",name:"Myanmar (Burma)"},NA:{code:"NA",name:"Namibia"},NR:{code:"NR",name:"Nauru"},NP:{code:"NP",name:"Nepal"},NL:{code:"NL",name:"Nederländerna"},NC:{code:"NC",name:"Nya Kaledonien"},NZ:{code:"NZ",name:"Nya Zeeland"},NI:{code:"NI",name:"Nicaragua"},NE:{code:"NE",name:"Niger"},NG:{code:"NG",name:"Nigeria"},NU:{code:"NU",name:"Niue"},NF:{code:"NF",name:"Norfolkön"},NO:{code:"NO",name:"Norge"},OM:{code:"OM",name:"Oman"},PK:{code:"PK",name:"Pakistan"},PS:{code:"PS",name:"Palestinska territorierna"},PA:{code:"PA",name:"Panama"},PG:{code:"PG",name:"Papua Nya Guinea"},PY:{code:"PY",name:"Paraguay"},PE:{code:"PE",name:"Peru"},PH:{code:"PH",name:"Filippinerna"},PN:{code:"PN",name:"Pitcairnöarna"},PL:{code:"PL",name:"Polen"},PT:{code:"PT",name:"Portugal"},QA:{code:"QA",name:"Qatar"},MK:{code:"MK",name:"Makedonien"},RO:{code:"RO",name:"Rumänien"},RU:{code:"RU",name:"Ryssland"},RW:{code:"RW",name:"Rwanda"},RE:{code:"RE",name:"Réunion"},BL:{code:"BL",name:"S: t Barthélemy"},SH:{code:"SH",name:"S: t Helena"},KN:{code:"KN",name:"S: t Kitts och Nevis"},LC:{code:"LC",name:"S: t Lucia"},MF:{code:"MF",name:"Saint - Martin"},PM:{code:"PM",name:"S:t Pierre och Miquelon"},VC:{code:"VC",name:"S:t Vincent och Grenadinerna"},WS:{code:"WS",name:"Samoa"},SM:{code:"SM",name:"San Marino"},ST:{code:"ST",name:"São Tomé och Príncipe"},SA:{code:"SA",name:"Saudiarabien"},SN:{code:"SN",name:"Senegal"},RS:{code:"RS",name:"Serbien"},SC:{code:"SC",name:"Seychellerna"},SL:{code:"SL",name:"Sierra Leone"},SG:{code:"SG",name:"Singapore"},SK:{code:"SK",name:"Slovakien"},SI:{code:"SI",name:"Slovenien"},SB:{code:"SB",name:"Salomonöarna"},SO:{code:"SO",name:"Somalia"},ZA:{code:"ZA",name:"Sydafrika"},GS:{code:"GS",name:"Sydgeorgien och Sydsandwichöarna"},SS:{code:"SS",name:"Sydsudan"},ES:{code:"ES",name:"Spanien"},LK:{code:"LK",name:"Sri Lanka"},SD:{code:"SD",name:"Sudan"},SR:{code:"SR",name:"Surinam"},SJ:{code:"SJ",name:"Svalbard och Jan Mayen"},SZ:{code:"SZ",name:"Swaziland"},SE:{code:"SE",name:"Sverige"},CH:{code:"CH",name:"Schweiz"},SY:{code:"SY",name:"Syrien"},TW:{code:"TW",name:"Taiwan"},TJ:{code:"TJ",name:"Tadzjikistan"},TZ:{code:"TZ",name:"Tanzania"},TH:{code:"TH",name:"Thailand"},TL:{code:"TL",name:"Östtimor"},TG:{code:"TG",name:"Togo"},TK:{code:"TK",name:"Tokelau"},TO:{code:"TO",name:"Tonga"},TT:{code:"TT",name:"Trincodead och Tobago"},TN:{code:"TN",name:"Tunisien"},TR:{code:"TR",name:"Turkiet"},TM:{code:"TM",name:"Turkmenistan"},TC:{code:"TC",name:"Turks - och Caicosöarna"},TV:{code:"TV",name:"Tuvalu"},UG:{code:"UG",name:"Uganda"},UA:{code:"UA",name:"Ukraina"},AE:{code:"AE",name:"Förenade Arabemiraten"},GB:{code:"GB",name:"Storbritannien"},US:{code:"US",name:"USA"},UY:{code:"UY",name:"Uruguay"},UZ:{code:"UZ",name:"Uzbekistan"},VU:{code:"VU",name:"Vanuatu"},VE:{code:"VE",name:"Venezuela"},VN:{code:"VN",name:"Vietnam"},VG:{code:"VG",name:"Brittiska Jungfruöarna"},WF:{code:"WF",name:"Wallis - och Futunaöarna"},YE:{code:"YE",name:"Jemen"},ZM:{code:"ZM",name:"Zambia"},ZW:{code:"ZW",name:"Zimbabwe"},AX:{code:"AX",name:"Åland"},CI:{code:"CI",name:"Elfenbenskusten"},BQ:{code:"BQ",name:"Bonaire, Sint Eustatius och Saba"},CW:{code:"CW",name:"Curaçao"},SX:{code:"SX",name:"Sint Maarten"},EH:{code:"EH",name:"Västsahara"}};
+    const repaymentSourceAlternatives = [{label:"Lön",val:"Salary"},{label:"Pension",val:"Pension"},{label:"Sparande",val:"Savings"},{label:"Forsörjningsstöd",val:"SocialBenefits"},{label:"Studiestöd",val:"EducationalSupport"},{label:"Intäkter från näringsverksamhet inklusive hyresintäkter",val:"CommercialIncome"},{label:"Vinst från försäljning av fastighet ",val:"SaleOfRealEstate"},{label:"Vinst från försäljning av lös egendom (bil, båt, etc.)",val:"SaleOfMovables"},{label:"Arv/gåvor",val:"InheritanceGifts"},{label:"Vinst från investeringar",val:"YieldInvestments"},{label:"Aktieutdelning eller liknande vinst från näringsverksamhet",val:"ShareDividend"},{label:"Annan typ av ersättning (t.ex. från försäkring, avgångsvederlag eller liknande)",val:"Compensation"},{label:"Vinster från spel/lotterier",val:"Gambling"},{label:"Annat",val:"Other"}];
+    const statusTypes = {
+      'WAITING_INPUT': 'WAITING_INPUT',
+      'WAITING_DEPOSIT_CONFIRMATION': 'WAITING_DEPOSIT_CONFIRMATION',
+      'ERR_DECLINED_OTHER_REASON': 'ERR_DECLINED_OTHER_REASON'
+    }
+
+    new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data: () => ({
+        politicallyExposedPerson: 'NEJ',
+        thirdPartyDeclaration: false,
+        employmentType: '',
+        citizenship: '',
+        doubleCitizenship: '',
+        primaryIncomeRepayment: this.primaryIncomeRepaymentVal,
+        employer: '',
+        phoneNumber: '',
+        repaymentSource: '',
+        repaymentSourceOther: '',
+        phoneRules: [
+          value => (value && value.length > 8) || 'Skriv in fullständingt telefonnummer',
+        ],
+        processing: false,
+        processingStatus: statusTypes['WAITING_INPUT']
+      }),
+
+      methods: {
+        pollStatus () {
+          console.log('SHOULD POLL STATUS HERE')
+        },
+        handleResponse (data) {
+          switch (data.statusCode) {
+            default:
+            case statusTypes['WAITING_INPUT']:
+              // pending
+              this.pollStatus()
+              break
+            case statusTypes['WAITING_DEPOSIT_CONFIRMATION']:
+              // succcess
+              this.processingStatus = statusTypes['WAITING_DEPOSIT_CONFIRMATION']
+              break
+            case statusTypes['ERR_DECLINED_OTHER_REASON']:
+              // decilned
+              this.processingStatus = statusTypes['ERR_DECLINED_OTHER_REASON']
+              break
+          }
+        },
+        handleSubmit () {
+          this.processing = true
+          this.submitData()
+        },
+        async submitData () {
+          const citizenships = [this.citizenships.find(val => val.name === this.citizenship).code];
+          if (this.doubleCitizenship) citizenships.push(
+            this.citizenships.find(val => val.name === this.doubleCitizenship).code
+          )
+          const repaymentSourceAlternative = repaymentSourceAlternatives.find(val => val.label === this.repaymentSource);
+          const repaymentSource = repaymentSourceAlternative
+            ? repaymentSourceAlternative.val
+            : '';
+          const payload = {
+            phone: this.phoneNumber,
+            citizenships,
+            politicallyExposedPerson: this.yesOrNo.find(val => val.text === this.politicallyExposedPerson).val,
+            employmentType: this.employmentTypes.find(val => val.label === this.employmentType).val,
+            employer: this.employer,
+            primaryIncomeRepayment: this.primaryIncomeRepayment,
+            thirdPartyDeclaration: this.thirdPartyDeclaration,
+            repaymentSource,
+            repaymentSourceOther: this.repaymentSourceOther
+          }
+          console.log(payload)
+          const response = await fetch('${postUrl}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          })
+          const data = await response.json()
+          this.handleResponse(data)
+        }
+      },
+
+      computed: {
+        submitDisabled () {
+          const phoneValid = this.phoneNumber.length > 8;
+          const citizenshipValid = this.citizenship.length > 0;
+          let employmentValid = this.employmentType.length > 0 && this.employer.length > 1;
+          if (!this.primaryIncomeRepaymentVal) {
+            employmentValid = this.employmentType.length > 0;
+          }
+          let repaymentSource = this.primaryIncomeRepaymentVal || this.repaymentSource.length > 0;
+          if (this.repaymentSource === 'Annat') {
+            repaymentSource = this.primaryIncomeRepaymentVal || this.repaymentSource.length > 0 && this.repaymentSourceOther.length > 1;
+          }
+          return this.thirdPartyDeclaration
+            && phoneValid
+            && citizenshipValid
+            && employmentValid
+            && repaymentSource
+        },
+        primaryIncomeRepaymentVal () {
+          const validEmployment = this.employmentType === 'Tillsvidare'
+           || this.employmentType === 'Visstidsanställning'
+           || this.employmentType === 'Egen företagare'
+           this.primaryIncomeRepayment = validEmployment;
+           return validEmployment;
+        },
+        repaymentSources () {
+          return repaymentSourceAlternatives.map(v => v.label)
+        },
+        employmentTypes () {
+          return [
+            {
+              label: 'Tillsvidare',
+              val: 'Permanent'
+            },
+            {
+              label: 'Visstidsanställning',
+              val: 'Temporary'
+            },
+            {
+              label: 'Egen företagare',
+              val: 'Self Employed'
+            },
+            {
+              label: 'Pensionär',
+              val: 'Pensioners'
+            },
+            {
+              label: 'Arbetslös',
+              val: 'Unemployed'
+            },
+            {
+              label: 'Student',
+              val: 'Student'
+            }
+          ]
+        },
+        citizenships () {
+          return Object.values(citizenshipsObject)
+        },
+        yesOrNo () {
+          return [
+            {
+              text: 'JA',
+              val: true
+            },
+            {
+              text: 'NEJ',
+              val: false
+            }
+          ]
+        }
+      },
+
+      mounted () {
+        console.log(this.citizenships)
+      }
+    })
+  </script>
+</body>
+</html>

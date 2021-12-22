@@ -1,0 +1,76 @@
+<html>
+<head>
+  <title>Origo Sign status redirect</title>
+  <link rel="stylesheet" href="https://static.paymentiq.io/assets/fonts/custom-font-santander.css">
+  
+      <style>
+      html, body {
+        margin: 0px;
+        padding: 0px;
+        height: 100%;
+        width: 100%;
+        font-family: Santander, Arial, Sans-serif;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .origo-container {
+        margin: 0 auto;
+        padding: 14px;
+        opacity: 0;
+      }
+
+      .origo-container.visible {
+        opacity: 1;
+        -ms-filter: "progid: DXImageTransform.Microsoft.Alpha(Opacity=1)";
+        filter: alpha(opacity=1);
+        -webkit-transition: all .2s ease-out;
+        -moz-transition: all .2s ease-out;
+        -o-transition: all .2s ease-out;
+        -ms-transition: all .2s ease-out;
+        transition: all .2s ease-out;
+      }
+
+      .santander-logo {
+        display: block;
+        width: 100%;
+        max-width: 400px;
+        margin-bottom: 70px;
+      }
+    </style>
+</head>
+
+<body>
+  <div class='origo-container'>
+    <img class='santander-logo' src='https://static.paymentiq.io/santander-horizontal.svg' />
+    
+    <p>
+      Signering fullført, lukk dette vinduet
+    </p>
+
+  </div>
+  
+  <script>
+    triggerWindowClose()
+    
+    setTimeout(() => {
+      document.querySelector('.origo-container').classList.add('visible')
+    }, 1000)
+    
+    function reportSigned () {
+      // The parent that triggered this window to open
+      triggerWindowClose()
+    }
+    
+    function triggerWindowClose () {
+      if (window.opener) {
+        window.opener.postMessage({
+          eventType: 'PAYMENTIQ_ORIGO_CLOSE_SIGN'
+        }, window.origin)
+      } else {
+        console.log('window.opener is null')
+      }
+    }
+  </script>
+</body>
+</html>

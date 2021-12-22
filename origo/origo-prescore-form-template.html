@@ -1,0 +1,815 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Prescore</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://static.paymentiq.io/assets/fonts/custom-font-santander.css?env=origo_template">
+
+    <style>
+            html, body {
+                margin: 0px;
+                padding: 0px;
+                height: 100%;
+                width: 100%;
+                font-family: Santander, Arial, Sans-serif;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .santander-logo {
+                display: block;
+                width: 100%;
+                max-width: 400px;
+                margin-bottom: 70px;
+            }
+            
+            /* Loading modal */
+            .disabled-screen {
+              opacity: 0;
+              position: absolute;
+              top: 0px;
+              left: 0px;
+              height: 100%;
+              width: 100%;
+              background-color: #fff;
+              z-index: -1;
+            }
+            
+            .disabled-screen.visible {
+              z-index: 10;
+              opacity: 0.6;
+              transition: opacity .1s ease-in;
+            }
+            
+            .loading-screen {
+              opacity: 0;
+              width: 75%;
+              height: 40%;
+              background-color: #fff;
+              border: 1px solid #909090;
+              border-radius: 6px;
+              top: 10%;
+              position: fixed;
+              left: 50%;
+              margin-left: calc(75%/-2);
+              z-index: -1;
+              padding: 20px;
+              -webkit-box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+              -moz-box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+              box-shadow: 4px 4px 5px -4px rgba(0,0,0,0.75);
+            }
+            
+            .loading-screen.visible {
+              z-index: 20;
+              opacity: 1;
+              transition: opacity .1s ease-in;
+            }
+            
+            .loading-screen {
+              margin-top: 20px;
+            }
+            
+            .loading-screen .loader {
+              width: 20%;
+              height: 20%;
+              max-width: 50px;
+              max-height: 50px;
+              margin: 20px auto;
+            }
+            
+            .loading-screen .loader i {
+              font-size: 50px;
+            }
+            
+            .loading-screen h2 {
+              text-align: center;
+            }
+            
+            .loading-screen p {
+              text-align: center;
+              margin: 10px 0px;
+            }
+
+            .origo-container {
+                margin: 0 auto;
+            }
+
+            .form-group input {
+              border: 2px solid #99C4D4;
+              border-radius: 1px;
+            }
+
+            .form-group label {
+              font-weight: bold;
+              font-size: 1.2em;
+            }
+
+            .campaign-content {
+                margin: 20px 0px;
+            }
+
+            .campaign-content h3 {
+              font-size: 30px;
+              font-weight: normal;
+              margin-top: 40px;
+              margin-bottom: 40px;
+            }
+            
+            #campaign-options {
+              margin-top: 14px;
+            }
+
+            #campaign-options .form-error {
+              margin-bottom: 14px;
+              margin-left: 5px;
+            }
+
+            .form-check {
+              margin: 30px 0px;
+            }
+
+            .consent-container {
+              margin-top: 50px;
+            }
+
+            .form-check-subtext {
+              margin-top: 14px;
+              margin-bottom: 14px;
+              color:#434343;
+            }
+
+            .submit-btn {
+                background-color: #137E84;
+                color: #fff;
+                font-weight: normal;
+                font-size: 1.2em;
+                padding-top: 17px;
+                padding-bottom: 17px;
+                margin-top: 20px;
+                position: relative;
+            }
+            
+            .submit-btn i {
+              opacity: 0;
+              position: absolute;
+              right: 20px;
+              top: 22px;
+              font-size: 20px;
+            }
+
+            .submit-btn.loading i {
+              opacity: 1;
+            }
+            
+            .submit-btn:hover, .submit-btn.active {
+                background-color: #0F5F63;
+            }
+            
+            .terms-container {
+              margin-top: 7px;
+            }
+            
+            .terms-container p {
+              color: #272727;
+              margin: 14px 0px 14px 0px;
+            }
+            
+            .terms-container p b {
+              color: #212529;
+              
+            }
+            
+            .terms-container a {
+              color: #272727;
+              text-decoration: underline;
+            }
+
+            .form-error {
+              font-size: 19px;
+              color: hsl(0, 100%, 40%);
+              margin-top: 1rem;
+              display: none;
+            }
+
+            .form-error.visible {
+              display: block;
+            }
+
+            .form-error::before {
+              content: '!';
+              display: inline-block;
+              border-radius: 50%;
+              width: 1.3rem;
+              height: 1.3rem;
+              line-height: 1.2rem;
+              font-size: .8rem;
+              text-align: center;
+              margin-right: .5rem;
+              color: #fff;
+              background-color: hsl(0, 100%, 40%);
+              position: relative;
+              top: -2px;
+            }
+            
+            #submit-error {
+              display: none;
+            }
+            
+            #submit-error.visible {
+              display: block;
+            }
+
+            .payment-option-sub-choice-container {
+              display: flex;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              opacity: 0.5;
+            }
+
+            .payment-option-sub-choice-container.active {
+              opacity: 1;
+            }
+
+            .payment-option-sub-choice {
+              width: 100%;
+              cursor: pointer;
+              max-width: calc(50% - 7px);
+              flex-grow: 1;
+              border: 1px solid #99C4D4;
+              margin: 0px 0px 14px 0px;
+              padding: 10px;
+              border-radius: 4px;
+            }
+
+            .payment-option-sub-choice:hover {
+              border: 1px solid #222;
+              transition: all .1s ease-in;
+            }
+
+            .payment-option-sub-choice.active {
+              background-color: #eaf8fd;
+              border: 1px solid #222;
+            }
+
+            .payment-option-sub-choice:first-of-type {
+              margin-left: 0px;
+            }
+
+            .payment-option-sub-choice:last-of-type {
+              margin-right: 0px;
+            }
+
+            .payment-option-sub-choice p {
+              font-size: 1.1em;
+              margin-bottom: 5px;
+            }
+
+            .payment-option-sub-choice span {
+              color: #a5a5a5;
+            }
+            
+            @media (max-width: 605px) {
+                body {
+                  border: 1px solid #ccc;
+                  border-radius: 4px;
+                  padding: 15px;
+                }
+                
+                .payment-option-sub-choice {
+                   max-width: none;
+                   width: 100%;
+                   flex-grow: 1;
+                   margin-left: 0px;
+                   margin-right: 0px;
+                }
+            }
+
+            @media (max-width: 565px) {
+                .origo-container {
+                    padding: 14px;
+                }
+
+                .campaign-content .radio-option label {
+                    font-size: 0.9em;
+                }
+            }
+        </style>
+
+    <style>
+          /* Custom style for checkbox & radio inputs */
+          .custom-input-container {
+            display: block;
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            font-size: 22px;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+          }
+
+          .consent-container {
+            font-size: 14px;
+          }
+
+          /* Hide the browser's default radio button */
+          .custom-input-container input.radio {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+          }
+
+          .custom-input-container input.checkbox {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+          }
+
+
+          /* Create a custom radio button */
+          .checkmark {
+            position: absolute;
+            top: 2px;
+            left: 0;
+            height: 30px;
+            width: 30px;
+            border: 2px solid #99C4D4;
+            overflow: hidden;
+          }
+
+          /* only target checkboxes */
+          .checkbox .checkmark {
+            top: 6px;
+          }
+
+          .checkmark.radio {
+            border-radius: 50%;
+          }
+
+          /* On mouse-over, add a grey background color */
+          .custom-input-container:hover input ~ .checkmark {
+            transition: border-color, .1s ease-in;
+            border: 2px solid #137E84;
+          }
+
+          /* When the radio button is checked, add a green dot */
+          .custom-input-container input:checked ~ .checkmark {
+            background-color: #fff;
+          }
+
+          /* Create the indicator (the dot/circle - hidden when not checked) */
+          .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+          }
+
+          /* Show the indicator (dot/circle) when checked */
+          .custom-input-container input:checked ~ .checkmark:after {
+            display: block;
+          }
+
+          /* Style the indicator (dot/circle) */
+          .custom-input-container.radio .checkmark:after {
+            top: 6px;
+            left: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #137E84;
+          }
+
+          .custom-input-container label {
+            margin: 0px 0px 0px 14px;
+          }
+
+          /* Style the checkmark/indicator */
+        .custom-input-container.checkbox .checkmark:after {
+          left: 10px;
+          top: 5px;
+          width: 7px;
+          height: 14px;
+          border: solid #137E84;
+          border-width: 0 3px 3px 0;
+          -webkit-transform: rotate(45deg);
+          -ms-transform: rotate(45deg);
+          transform: rotate(45deg);
+        }
+      </style>
+</head>
+
+<body onLoad="initSetup()">
+<div class='origo-container'>
+  <div class='disabled-screen'></div>
+  <div class='loading-screen'>
+    <div class='loader'>
+      <i class="fa fa-circle-o-notch fa-spin"></i>
+    </div>
+    
+    <h2>Behandler søknaden din</h2>
+    <p>Dette kan ta et minutt eller to, men vi er snart ferdige</p>
+  </div>
+  
+    <form id='origo-form' action="${postUrl}" method="post">
+        <img class='santander-logo' src='https://static.paymentiq.io/santander-horizontal.svg' />
+
+        <div class='campaign-content'>
+            <h3>${if fixed}Velg månedsbeløp${else}Velg utsettelse*${end}</h3>
+            
+            ${if nationalIdNeeded}
+            <div class="form-group">
+                <label for="nationalId">Fødselsnummer</label>
+                <input
+                        id="nationalId"
+                        class='form-control form-control-lg required-input'
+                        name="nationalId"
+                        pattern="[0-9]*"
+                        type="text"
+                        maxlength="11"
+                        oninput="this.value=this.value.replace(/[^0-9]/g,'');"
+                        placeholder="11 siffer">
+                <div class='form-error'>Gyldig fødselsnummer er påkrevd</div>
+            </div>
+            ${end}
+
+            <div id='campaign-options'>
+                <div class='form-error'>Velg et betalingsalternativ</div>
+                ${foreach campaigns campaign}
+                    ${if campaign.fixedMonthlyPayment}
+                    <div class='payment-option-sub-choice-container'>
+                        <input type="hidden" id="campaignCode" name="campaignCode" value="${campaign.campaignCode}" checked="true">
+                        ${foreach payoffPeriods payoffPeriod}
+                        <div class='payment-option-sub-choice' id='${payoffPeriod.monthlyPayment}'>
+                            <p>${payoffPeriod.monthlyPayment;numberformat} kr / ${payoffPeriod.downPaymentPeriod;numberformat} mnd / Totalt kr ${payoffPeriod.totalAmount;numberformat}</p>
+                            <span>Eff.rente ${payoffPeriod.effectiveInterestRate;numberformat}% | Kostnad kr ${payoffPeriod.totalCreditCost;numberformat}</span>
+                        </div>
+                        ${end}
+                    </div>
+                    ${else}
+                    <div class='payment-option-container'>
+                        <label for="${campaign.campaignCode}" class="payment-option custom-input-container radio">${campaign.description}
+                            <input id="${campaign.campaignCode}" class='radio' type="radio" name="campaignCode" value="${campaign.campaignCode}">
+                            <span class="checkmark radio"></span>
+                        </label>
+                    </div>
+                    ${end}
+                ${end}
+                <input type="hidden" id="monthlyAmount" name="monthlyAmount">
+            </div>
+
+            ${if consents}
+            ${foreach consents consent}
+            <div class="form-group">
+                <input type="checkbox" id="${consent.consentCode}" class='form-check-input' name="consents[${consent.consentCode}]">
+                <label class="form-check-label" for="${consent.consentCode}">${consent.helpText} ${consent.name}</label></br>
+                <div class='form-error'>${consent.error}</div>
+                <!--<div class='form-check-subtext'>${consent.helpText}</div>-->
+            </div>
+            ${end}
+            ${end}
+            
+            <div class='form-error' id='submit-error'></div>
+
+            <button onclick="validate()" type="button" class="submit-btn btn btn-block" value="Submit">
+              Fortsett
+              <i class="fa fa-circle-o-notch fa-spin"></i>
+            </button>
+            
+            <div class='terms-container'>
+              ${if fixed}
+                <div>
+                  <p>Ved å sende inn søknad aksepterer du at det vil bil foretatt en kredittvurdering og at utsendelse av gjenpartsbrev vil foregå elektronisk.</p>
+                  
+                  <p>
+                    *Betalingsutsettelse forutsetter inngåelse av kredittavtale med Santander Consumer Bank med et kredittkort etter kredittvurdering.
+                  </p>
+                  
+                  Her kan du lese <a href="https://www.santanderconsumer.no/personvern" target="_blank">mer om hvordan vi håndterer dine personopplysninger</a>
+                </div>
+              ${else}
+                <div>
+                  <p>
+                    Ved å sende inn søknad aksepterer du at det vil bil foretatt en kredittvurdering og at utsendelse av gjenpartsbrev vil foregå elektronisk.
+                  </p>
+                  <p>
+                    *Betalingsutsettelse forutsetter inngåelse av kredittavtale med Santander Consumer Bank med et kredittkort etter kredittvurdering. Betaler du ikke innen avtalt tid så går du over til delbetaling med følgende priseksempel: Eff.rente 30,4 %, kr 20 000 o/12 mnd, kostnad kr 3 022, totalt kr 23 022
+                  </p>
+                  Her kan du lese <a href="https://www.santanderconsumer.no/personvern" target="_blank">mer om hvordan vi håndterer dine personopplysninger</a>
+                </div>
+              ${end}
+            </div>
+        </div>
+    </form>
+</div>
+<!-- Custom scripts -->
+<script type="text/javascript">
+          function initSetup () {
+            if ($) {
+              // wait for jQuery to be defined
+              registerPaymentOptionClick()
+              registerPaymentSubOptionClick()
+              
+              // Report own height to PIQ Cashier
+              setTimeout(function () {
+                window.parent.postMessage({
+                  eventType: 'SET_PROVIDER_IFRAME_HEIGHT',
+                  payload: {
+                    height: $('.origo-container')[0].offsetHeight + 125,
+                    sender: 'origoTemplate'
+                  }
+                }, '*')
+              }, 500)
+              
+              // First option for Delbetaling
+              let firstSubOption = $('.payment-option-sub-choice')
+              if (!firstSubOption || !firstSubOption[0]) {
+                // first option for Utsett betaling
+                firstSubOption = $('input[type=radio]').first()
+              }
+              firstSubOption[0].click() // pre-select the first one
+              
+              catchFormEnterSubmit()
+              
+            } else {
+              setTimeout(() => {
+                initSetup()
+              }, 100)
+            }
+          }
+          
+          function catchFormEnterSubmit () {
+            $('input').keypress(function (e) {
+              if (e.which == 13) {
+                validate()
+                return false;    //<---- Add this line
+              }
+            });
+          }
+
+          function submitForm() {
+            setSubmitError(null) // reset submitError
+            
+              $.ajax({
+                type: 'POST',
+                url: $('#origo-form').attr('action'),
+                data: $('#origo-form').serialize() ,
+                 success: function (data, textStatus, xhr) {
+                  /*
+                    We initiate the pre-process between PIQ and Origo
+                    Origo is slow to respond, and PIQ has a max timeout
+                    of 60seconds which sometimes is exceeded. So we drop
+                    this request right away and instead start polling PIQ
+                  */
+                  if (xhr.status === 201) {
+                    setTimeout(function(){
+                      poll()  
+                    }, 5000)
+                  } else if (data.redirectOutput && data.redirectOutput.url) {
+                    window.location.href = data.redirectOutput.url
+                  } else {
+                    setLoadingState(false)
+                    setSubmitError('Unknown response code - please contact support')
+                  }
+                  
+                  /*
+                  if (data.redirectOutput && data.redirectOutput.url) {
+                    window.location = data.redirectOutput.url;
+                  } else if (data.txState === 'FAILED') {
+                    setSubmitError(data.statusCode)
+                    setLoadingState(false)
+                  }
+                  setLoadingState(false)
+                  */
+                },
+                error:function(xhr, textStatus, thrownError, data) {
+                  var errorMessage = textStatus
+                  if (xhr.status === 504) { // timeout
+                    errorMessage = 'Uff da, noe gikk galt - Prøv igjen senere eller velg en annen betalingsmetode'
+                  } else if (xhr.status === 500) { // timeout
+                    errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+                  } else if (xhr.status === 400) {
+                    errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+                  }
+                  setSubmitError(errorMessage)
+                  setLoadingState(false)
+                  window.location.href = "${redirectUrl}"
+                  console.log("Error: " + thrownError);
+                  console.log("Error: " + textStatus);
+                }
+              });
+          }
+          
+          var pollCounter = 0
+          function poll () {
+            pollCounter++
+            
+            if (pollCounter >= 60) {
+              setSubmitError('Kan ikke få oppdatert status - maksimalt antall forsøk nådd')
+              setLoadingState(false)
+              return 
+            } else if (pollCounter === 3) {
+              /* Give the user some feedback */
+              $('.loading-screen').append('<p>Nesten ferdig...</p>').hide().fadeIn(50)
+            }
+            
+            $.ajax({
+              type: 'POST',
+              url: '${pollUrl}',
+              success: function (data, textStatus, xhr) {
+                if (xhr.status === 204) {
+                  setTimeout(function () {
+                    poll()
+                  }, 3000)
+                } else if (xhr.status === 200) {
+                  /*
+                    Unless piq responds with try again, and it's a success (20X),
+                    we can assume that it's a redirectUrl to the next step (either score-form or the status template)
+                  */
+                  setLoadingState(false)
+                  window.location.href = data // redirectUrl
+                }
+              },
+              error:function(xhr, textStatus, thrownError, data) {
+                var errorMessage = textStatus
+                if (xhr.status === 504) { // timeout
+                  errorMessage = 'Uff da, noe gikk galt - Prøv igjen senere eller velg en annen betalingsmetode'
+                } else if (xhr.status === 500) { // timeout
+                  errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+                } else if (xhr.status === 400) {
+                  errorMessage = 'Noe i dataene som ble sendt inn var ikke riktig. Prøv igjen eller bruk en annen betalingsmåte'
+                }
+                setSubmitError(errorMessage)
+                setLoadingState(false)
+                console.log("Error: " + thrownError);
+                console.log("Error: " + textStatus);
+              }
+            });
+          }
+          
+          function setSubmitError (error) {
+            if (error) {
+              $('#submit-error').addClass('visible')
+              $('#submit-error').text(error)  
+            } else {
+              $('#submit-error').removeClass('visible')
+              $('#submit-error').text('')  
+            }
+          }
+
+          function registerPaymentOptionClick () {
+            $('.payment-option input').click(function (e) {
+              $('.payment-option-sub-choice-container').removeClass('active') // reset active ones
+
+              const parentElement = e.target.parentElement.parentElement // .payment-option-container
+              const subOptionsContainer = $(parentElement).find('.payment-option-sub-choice-container')
+              $(subOptionsContainer).addClass('active') // activate subOptions
+
+              if ($(subOptionsContainer).find('.payment-option-sub-choice.active').length === 0) {
+                $('.payment-option-sub-choice.active').removeClass('active') // reset active ones
+
+                var firstSubOption = $(subOptionsContainer).find('.payment-option-sub-choice').first()
+                selectSubOption(firstSubOption)
+              }
+            })
+          }
+
+          function registerPaymentSubOptionClick (e) {
+            $('.payment-option-sub-choice').click(function (e) {
+              var clickedElement = null
+              if (e.target.nodeName !== 'DIV') {
+                clickedElement = e.target.parentElement
+              } else {
+                clickedElement = e.target
+              }
+              $('.payment-option-sub-choice-container').removeClass('active') // reset active ones
+              $('.payment-option-sub-choice.active').removeClass('active') // reset active ones
+              const clickedSubOption = clickedElement
+              const parentElement = clickedSubOption.parentElement.parentElement // .payment-option-container
+              const subOptionsContainer = $(parentElement).find('.payment-option-sub-choice-container')
+              $(subOptionsContainer).addClass('active') // activate subOptions
+
+              selectSubOption(clickedSubOption)
+
+              // lasty set the parent input as selected by triggering a click
+              $(parentElement).find('input').click()
+            })
+          }
+
+          function selectSubOption (option) {
+            if (option[0]) {
+              option = option[0]
+            }
+            if (option) {
+              $(option).addClass('active') // activate the clicked sub option
+              $("#monthlyAmount").val(option.id)  
+            }
+          }
+
+          function checkForm () {
+            var valid = false
+            var options = $('#campaign-options input')
+            for (var i = 0; i < options.length; i++) {
+              if (options[i].checked) {
+                valid = true
+              }
+            }
+            
+            if (!valid) {
+              var options = $('#campaign-options .form-error').addClass('visible')
+            }
+            return valid
+          }
+
+          function checkMandatoryConfirms () {
+            var valid = true
+            var requiredConfirms = document.querySelectorAll('.form-check-required')
+            requiredConfirms.forEach(function (required) {
+              if (!required.checked) {
+                valid = false
+                var children = required.parentElement.children
+                for (var key in children) {
+                  if (children[key].className === 'form-error') {
+                    children[key].className += ' visible'
+                  }
+                }
+              }
+            })
+            
+            return valid
+          }
+          
+          function checkInputs () {
+            var inputRules = {
+              nationalId: {
+                length: 11
+              }
+            }
+            
+            var valid = true
+            var requiredInputs = $('.required-input').each(function () {
+              var value = $(this).val()
+              var id = $(this).attr('id')
+              var lengthRequirement = inputRules[id].length
+              if (value === '' || value.length !== lengthRequirement) {
+                valid = false
+                $(this).parent().find('.form-error').addClass('visible')
+              }
+            })
+            return valid
+          }
+
+          function resetErrors () {
+            var errors = document.querySelectorAll('.form-error.visible')
+            for (var key in errors) {
+              errors[key].className = 'form-error'
+            }
+          }
+
+          function setLoadingState (state) {
+            var submitBtn = $('.submit-btn')
+            var disabledScreen = $('.disabled-screen')
+            var loadingModal = $('.loading-screen')
+            if (state) {
+              $(submitBtn).addClass('loading');
+              $(disabledScreen).addClass('visible');
+              $(loadingModal).addClass('visible');  
+            } else {
+              $(submitBtn).removeClass('loading');
+              $(disabledScreen).removeClass('visible');
+              $(loadingModal).removeClass('visible');
+            }
+            
+            $(submitBtn).prop('disabled', state);
+          }
+
+          function validate (e) {
+            setLoadingState(true)
+            resetErrors()
+
+            var mandatoryChecks = checkMandatoryConfirms()
+            var formCheck = checkForm()
+            var inputCheck = checkInputs()
+
+            if (mandatoryChecks && formCheck && inputCheck) {
+              submitForm();
+              //document.getElementById('origo-form').submit()
+            } else {
+              setSubmitError('En eller flere feil ble oppdaget')
+              setLoadingState(false)
+            }
+          }
+
+        </script>
+
+<!-- Third party scripts -->
+<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

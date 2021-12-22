@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link async rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2/dist/semantic.min.css"/>
+    <style>
+      body {
+        margin: 0px;
+        transition: background-color 1000ms linear 0s;
+        background-color: rgb(4, 5, 23);
+        color: #ffffff;
+        font-family: inter!important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" type="text/css" />
+    <title>Coinspaid redirect</title>
+  </head>
+  <body>
+
+    <!-- We will put our React component inside this div. -->
+    <div id="app-content"></div>
+
+    <!-- Load React. -->
+    <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui-react/dist/umd/semantic-ui-react.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.24.0/babel.min.js"></script>
+
+    <!-- Load our React component. -->
+<script type="text/babel">
+'use strict';
+
+const translations = {
+  "exchangeTxRes.minAmountDeposit": "${exchangeTxRes.minAmountDeposit}",
+  "exchangeTxRes.currencyFrom": "${exchangeTxRes.currencyFrom}",
+  "senderAmount": "${senderAmount}"
+}
+
+const e = React.createElement;
+const { useState } = React;
+const {
+  Container,
+  Divider,
+  Grid,
+  Header,
+  Icon,
+  Card,
+} = semanticUIReact;
+
+const AnotherGridLayout = () => (
+  <Container>
+    {/* Heads up! We apply there some custom styling, you usually will not need it. */}
+    <style>
+      {`
+      p {
+        align-content: center;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 6em;
+      }
+      p > span {
+        opacity: 0.4;
+        text-align: center;
+      }
+    }
+    `}
+    </style>
+
+    <Header as='h2' icon inverted textAlign='center'>
+      <img
+        src="https://static.paymentiq.io/coinspaid_logo.svg"
+        style={{ width: '200px' }}
+        alt="coinspaid_logo"
+      />
+      <Divider />
+      <Header.Subheader>
+        Min {translations['exchangeTxRes.minAmountDeposit']} payment {translations['exchangeTxRes.currencyFrom']}
+      </Header.Subheader>
+    </Header>
+    <p style={{ textAlign: 'center' }}>
+      Amount: {translations.senderAmount}
+    </p>
+
+    <Card
+      href='#card-example-link-card'
+      header='Elliot Baker'
+      meta='Friend'
+      description='Elliot is a sound engineer living in Nashville who enjoys playing guitar and hanging with his cat.'
+    />
+  </Container>
+)
+
+const App = () => {
+  const [state, setState] = useState('');
+
+  return <AnotherGridLayout />
+}
+
+const domContainer = document.querySelector('#app-content');
+ReactDOM.render(e(App), domContainer);
+</script>
+
+</body>
+</html>

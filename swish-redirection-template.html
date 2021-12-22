@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+
+<script type="text/javascript">
+
+	var timer = setInterval(function(){ status() }, 3000);
+	
+	function stop() {
+			clearInterval(timer);
+		}
+function status(){
+        
+        $.post("${pollingUrl}",
+            function(data,status){
+                $("#fonix-loader").hide();
+                 if(data === "Try-again"){
+                 var txt = "";
+                 $("#errortxt").text(txt);
+                 }
+                 if (data === "Final"){
+                    console.log("${redirectUrl}")
+                    console.log("${returnUrl}"")
+                    window.location.href = "${redirectUrl}";
+                 }
+                 
+            },);
+    }
+       	$(document).ready(function() {
+			timer
+		});
+
+
+</script>
+<style>
+body {
+  background-color: #f9f9f9;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.logo-container {
+  text-align: center;
+  height: 55px;
+}
+
+.logo-container, .header-text {
+  position: relative;
+  top: 35px;
+}
+
+.logo-container img {
+  width: 150px;
+  
+}
+
+
+@keyframes blink {
+ 
+  0% {
+    opacity: 0.15;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+.loader-component {
+  width: 60px;
+	height: 40px;
+	position: relative;
+	margin: 150px auto 100px auto;
+	position: relative;
+	top: 40px;
+}
+.loader-component span {
+  height: 7px;
+  width: 7px;
+  display: inline-block;
+  background-color: #111;
+  border-radius: 50px;
+  
+  animation-name: blink;
+  
+  animation-duration: 1s;
+  
+  animation-iteration-count: infinite;
+ 
+  animation-fill-mode: both;
+}
+.loader-component span:nth-child(2) {
+
+  animation-delay: 0.2s;
+  margin: 0 8px;
+}
+.loader-component span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+		
+		
+
+		
+		
+.button {
+    background-color: #A0A6F7;
+    border: none;
+    color: #D0D0D0;
+    padding: 6px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 3px 2px;
+    cursor: pointer;
+}
+.loader {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.hidden {
+  display: none;
+}
+
+.text {
+    background-color: #ffffff;
+    border: solid;
+    border-color: #D0D0D0;
+    border-width: 1px;
+    color: black;
+    padding: 6px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 3px 2px;
+    cursor: pointer;
+  
+}
+.pagewrapper{
+  border: solid;
+  border-color: #DFDFDF;
+  border-width: 2px;
+  height:100%;
+  border-radius: 25px;
+  font-family:Arial, sans-serif;
+}
+ 
+.white-top-container {
+  position: absolute;
+  top: 0px;
+  height: 250px;
+  width: 150%;
+  margin: 0px 0px 0px -25%;
+  border-radius: 55%;
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+  background-color: #fff;
+  border-bottom: 1px solid #e6e6e6;
+  box-shadow: 0px 1px 5px 2px #f1f1f1;
+}
+
+.instruction-list {
+  text-align: center;
+}
+
+.instruction-list li {
+  margin: 5px 0;
+}
+  
+  
+
+
+::placeholder {
+    color: #D0D0D0;
+    opacity: 1; /* Firefox */
+    font-size: 16px;
+}
+
+hr {
+margin-left: auto;
+margin-right: auto;
+}
+
+</style>
+</head>
+<body bgcolor="#ffffff">
+<!-- <div class='pagewrapper'> -->
+   <div class='white-top-container'>
+<br><br>
+<div class='logo-container'><img src="https://static.paymentiq.io/swish.svg" alt="Swish"></div>
+<br>
+<div class="txt header-text" align="center" >
+<font id="message" color = "#696969" size="3" ><b align="center">Väntar på betalning från ${ptx.latestTxCmdMap.SwishDepositInput.swishNumber} </b></font>
+</div>
+<div class='loader-component'>
+<span></span>
+<span></span>
+<span></span>
+</div>
+	<ul class='instruction-list' >
+     <li>1.Öppna Swish-appen för att slutföra transaktionen</li>
+     <li>2.Kontrollera belopp, mottagare och acceptera betalningen</li>
+     <li>3. Klart!</li>
+  </ul>
+</div>
+<!--	</div> -->
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html><html>
+<head>
+    <title>PaymentIQ - Loading...</title>
+    <!--<link rel="icon" href="https://ecommpay.com/brand/ecommpay-blue-72dpi.png">-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="7; url='https://www.w3docs.com'" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript">
+
+        function poll(loadingFor, currentTimeout) {
+            currentTimeout = Math.min(currentTimeout+1000, 30000); // timeout between polls with backoff (adding one second per run), maxing out at 30s
+            $.post("https://api.paymentiq.io/paymentiq/api/mntx/poll/100300003A728524844",
+                function (data, status) {
+                    if (data === "Try-again") {
+                        if (loadingFor > 0) {
+                            loadingFor--;
+                            setTimeout(function () {
+                                poll(loadingFor, currentTimeout)
+                            }, currentTimeout);
+                        } else {
+                            window.location.href = "https://api.paymentiq.io/paymentiq/api/mntx/redirect/100300003A728524844";
+                        }
+                    }
+                    if (data === "Failed") {
+                        window.location.href = "https://api.paymentiq.io/paymentiq/api/mntx/redirect/100300003A728524844";
+                    }
+                    if (data === "Final") {
+                        process();
+                    }
+                });
+        }
+
+        function process() {
+            $.post("https://api.paymentiq.io/paymentiq/api/mntx/process/100300003A728524844",
+                function (data, status) {
+                    if (data.redirectOutput.parameters.Type === "3DS_REDIRECT") {
+                        window.location.href = data.redirectOutput.url;
+                    } else {
+                        validate3DS(data.redirectOutput.url, data.redirectOutput.parameters, status);
+                    }
+                });
+        }
+
+        function validate3DS(url, data, status) {
+            $("#mdInput").val(data.MD);
+            $("#paReqInput").val(data.PaReq);
+            $("#termUrlInput").val(data.TermUrl);
+
+            var form = $("#threedsForm");
+            form.attr('action', data.AcsUrl);
+            form.submit();
+        }
+
+        $(document).ready(function () {
+            setTimeout(function () {
+                poll(100, 3000) // number of polls and current timeout
+            }, 3000); // initial poll timeout
+        });
+
+    </script>
+    <style>
+        body {
+            background-color: #f9f9f9;
+            margin: 0;
+            font-family: Arial,
+            sans-serif;
+            /* overflow-x: hidden; */
+        }
+
+        .logo-container {
+            text-align: center;
+            height: 55px;
+        }
+
+        .logo-container,
+        .header-text {
+            position: relative;
+            top: 100px;
+        }
+
+        .logo-container img {
+            width: 200px;
+            height: auto;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 0.15;
+            }
+
+            20% {
+                opacity: 0.9;
+            }
+
+            100% {
+                opacity: 0.15;
+            }
+        }
+
+        .loader-component {
+            width: 60px;
+            height: 40px;
+            position: relative;
+            margin: 150px auto 100px auto;
+            top: 40px;
+        }
+
+        .loader-component span {
+            height: 7px;
+            width: 7px;
+            display: inline-block;
+            background-color: #111;
+            border-radius: 50px;
+            animation-name: blink;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-fill-mode: both;
+        }
+
+        .loader-component span:nth-child(2) {
+            animation-delay: 0.2s;
+            margin: 0 8px;
+        }
+
+        .loader-component span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .white-top-container {
+            position: fixed;
+            top: 0;
+            height: 250px;
+            width: 150%;
+            margin: 0 0 0 -25%;
+            border-radius: 0 0 55% 55%;
+            background-color: #fff;
+            border-bottom: 1px solid #e6e6e6;
+            box-shadow: 0 1px 5px 2px #f1f1f1;
+        }
+
+        .form_container {
+            font-family: MuseoSansRound300, sans-serif;
+            line-height: 1.4;
+            text-align: center;
+            position: relative;
+            margin: 0 0 100px 0;
+        }
+
+        hr {
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+
+<body bgcolor="#ffffff">
+<div class="white-top-container"></div>
+
+<div class="content-container">
+    <div class="logo-container">
+        <!--<img src="https://ecommpay.com/brand/ecommpay-blue-72dpi.png" alt="ECommPay">-->
+        <div class="header-text" align="center">
+            Please wait ...
+        </div>
+    </div>
+    <br>
+    <div class="loader-component">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    <div class="form_container">
+        <form id="threedsForm" action="-" method="post" enctype="application/x-www-form-urlencoded">
+            <input type="hidden" id="paReqInput" name="PaReq" value="" />
+            <input type="hidden" id="termUrlInput" name="TermUrl" value="" />
+            <input type="hidden" id="mdInput" name="MD" value="" />
+        </form>
+    </div>
+</div>
+</body>
+</html>
